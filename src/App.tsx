@@ -12,6 +12,7 @@ import Progress from "./pages/Progress";
 import Sessions from "./pages/Sessions";
 import Exercises from "./pages/Exercises";
 import Community from "./pages/Community";
+import TherapistDashboard from "./pages/TherapistDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/sessions" element={<Sessions />} />
           <Route path="/exercises" element={<Exercises />} />
           <Route path="/community" element={<Community />} />
+          <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
