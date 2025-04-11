@@ -6,7 +6,7 @@ import UpcomingSession from "@/components/UpcomingSession";
 import WeeklyProgress from "@/components/WeeklyProgress";
 import AIInsights from "@/components/AIInsights";
 import InsightCard from "@/components/InsightCard";
-import { CaretDown, CaretUp, HelpCircle, BellRing } from "lucide-react";
+import { ChevronDown, ChevronUp, HelpCircle, BellRing } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -30,7 +30,7 @@ const Index = () => {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className="rounded-full bg-muted p-2">
-                  <CaretUp className="h-4 w-4 text-green-500" />
+                  <ChevronUp className="h-4 w-4 text-green-500" />
                 </div>
                 <h3 className="text-sm font-medium">Mood Trend</h3>
                 <TooltipProvider>
@@ -56,7 +56,7 @@ const Index = () => {
               </div>
               <div className="text-xs font-medium text-green-600 flex items-center gap-1">
                 <span>Improving</span>
-                <CaretUp className="h-3 w-3" />
+                <ChevronUp className="h-3 w-3" />
               </div>
             </div>
           </CardContent>
@@ -67,7 +67,7 @@ const Index = () => {
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <div className="rounded-full bg-muted p-2">
-                  <CaretDown className="h-4 w-4 text-green-500" />
+                  <ChevronDown className="h-4 w-4 text-green-500" />
                 </div>
                 <h3 className="text-sm font-medium">Anxiety Level</h3>
                 <TooltipProvider>
@@ -93,7 +93,7 @@ const Index = () => {
               </div>
               <div className="text-xs font-medium text-green-600 flex items-center gap-1">
                 <span>Improving</span>
-                <CaretUp className="h-3 w-3" />
+                <ChevronUp className="h-3 w-3" />
               </div>
             </div>
           </CardContent>
