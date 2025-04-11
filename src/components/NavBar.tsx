@@ -1,5 +1,5 @@
 
-import { Bell, Menu, Settings, User, MessageCircle } from "lucide-react";
+import { Bell, Menu, Settings, User, MessageCircle, Brain } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 interface NavBarProps {
   toggleSidebar?: () => void;
@@ -20,6 +20,10 @@ interface NavBarProps {
 const NavBar = ({ toggleSidebar }: NavBarProps) => {
   const isMobile = useIsMobile();
   const [notifications] = useState(2);
+  const location = useLocation();
+  
+  // Check if we're on the index page to help with AI Mode indicator
+  const isIndexPage = location.pathname === "/";
 
   return (
     <div className="w-full px-4 py-3 border-b bg-background/95 backdrop-blur-sm sticky top-0 z-10">
@@ -36,7 +40,14 @@ const NavBar = ({ toggleSidebar }: NavBarProps) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <h1 className="text-lg font-semibold">CBT Insight Guardian</h1>
+            <div className="flex flex-col">
+              <h1 className="text-lg font-semibold">CBT Insight Guardian</h1>
+              {isIndexPage && window.localStorage.getItem('aiMode') === 'true' && (
+                <span className="text-xs text-therapy-primary flex items-center">
+                  <Brain className="h-3 w-3 mr-1" /> AI Self-Therapy Mode
+                </span>
+              )}
+            </div>
           </Link>
         </div>
 
