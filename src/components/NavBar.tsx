@@ -1,5 +1,5 @@
 
-import { Bell, Menu, Settings, User } from "lucide-react";
+import { Bell, Menu, Settings, User, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -39,6 +39,12 @@ const NavBar = ({ toggleSidebar }: NavBarProps) => {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" asChild>
+            <Link to="/chat">
+              <MessageCircle className="h-5 w-5" />
+            </Link>
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">

@@ -6,7 +6,8 @@ import {
   Home, 
   LineChart, 
   Lightbulb,
-  Users
+  Users,
+  MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ const Sidebar = ({ isOpen, toggleSidebar }: SidebarProps) => {
   const navItems = [
     { name: "Dashboard", path: "/", icon: Home },
     { name: "Journal", path: "/journal", icon: BookOpen },
+    { name: "Chat", path: "/chat", icon: MessageCircle },
     { name: "Insights", path: "/insights", icon: LineChart },
     { name: "Progress", path: "/progress", icon: BarChart4 },
     { name: "Sessions", path: "/sessions", icon: Calendar },
@@ -78,9 +80,11 @@ const Sidebar = ({ isOpen, toggleSidebar }: SidebarProps) => {
           <h4 className="text-sm font-medium mb-2">Next Session</h4>
           <p className="text-xs text-muted-foreground mb-2">Thursday, 28 July</p>
           <p className="text-xs text-muted-foreground">2:00 PM - 3:00 PM</p>
-          <Button variant="outline" size="sm" className="w-full mt-3">
-            <Calendar className="h-3 w-3 mr-2" />
-            View Details
+          <Button variant="outline" size="sm" className="w-full mt-3" asChild>
+            <Link to="/sessions">
+              <Calendar className="h-3 w-3 mr-2" />
+              View Details
+            </Link>
           </Button>
         </div>
       </div>
