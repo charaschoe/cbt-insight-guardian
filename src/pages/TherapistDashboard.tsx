@@ -6,6 +6,7 @@ import { BarChart4, Users, Brain, Calendar, MessageSquare, LineChart } from "luc
 import { PatientList } from "@/components/therapist/PatientList";
 import { TherapistAnalytics } from "@/components/therapist/TherapistAnalytics";
 import { AIInsightTools } from "@/components/therapist/AIInsightTools";
+import { AIAdvancedTools } from "@/components/therapist/AIAdvancedTools";
 
 const TherapistDashboard = () => {
   return (
@@ -21,6 +22,7 @@ const TherapistDashboard = () => {
           <TabsTrigger value="patients">Patients</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
           <TabsTrigger value="ai-tools">AI Tools</TabsTrigger>
+          <TabsTrigger value="ai-advanced">Advanced AI</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
@@ -130,6 +132,10 @@ const TherapistDashboard = () => {
 
         <TabsContent value="ai-tools">
           <AIInsightTools />
+        </TabsContent>
+        
+        <TabsContent value="ai-advanced">
+          <AIAdvancedTools />
         </TabsContent>
       </Tabs>
     </MainLayout>

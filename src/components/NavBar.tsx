@@ -1,5 +1,5 @@
 
-import { Bell, Menu, Settings, User, MessageCircle, Brain } from "lucide-react";
+import { Bell, Menu, Settings, User, MessageCircle, Brain, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -12,6 +12,8 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAIMode } from "@/hooks/use-ai-mode";
+import { Badge } from "@/components/ui/badge";
 
 interface NavBarProps {
   toggleSidebar?: () => void;
@@ -21,6 +23,7 @@ const NavBar = ({ toggleSidebar }: NavBarProps) => {
   const isMobile = useIsMobile();
   const [notifications] = useState(2);
   const location = useLocation();
+  const { isAIMode, therapyMode } = useAIMode();
   
   // Check if we're on the index page to help with AI Mode indicator
   const isIndexPage = location.pathname === "/";
@@ -42,10 +45,24 @@ const NavBar = ({ toggleSidebar }: NavBarProps) => {
             </div>
             <div className="flex flex-col">
               <h1 className="text-lg font-semibold">CBT Insight Guardian</h1>
-              {isIndexPage && window.localStorage.getItem('aiMode') === 'true' && (
-                <span className="text-xs text-therapy-primary flex items-center">
-                  <Brain className="h-3 w-3 mr-1" /> AI Self-Therapy Mode
-                </span>
+              {isIndexPage && (
+                <>
+                  {isAIMode && (
+                    <span className="text-xs text-therapy-primary flex items-center">
+                      <Brain className="h-3 w-3 mr-1" /> AI Self-Therapy Mode
+                    </span>
+                  )}
+                  {therapyMode === 'corporate' && (
+                    <span className="text-xs text-blue-600 flex items-center">
+                      <Briefcase className="h-3 w-3 mr-1" /> Corporate Wellness Mode
+                    </span>
+                  )}
+                  {therapyMode === 'clinical' && (
+                    <span className="text-xs text-green-600 flex items-center">
+                      <User className="h-3 w-3 mr-1" /> Clinical Integration Mode
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </Link>
@@ -100,6 +117,7 @@ const NavBar = ({ toggleSidebar }: NavBarProps) => {
               <DropdownMenuItem asChild>
                 <Link to="/therapist-dashboard">
                   Therapist Dashboard
+                  <Badge variant="outline" className="ml-2 bg-therapy-light">AI-Enhanced</Badge>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />

@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, MessageSquare, FileText, Lightbulb, Calendar, MessageCircle, ArrowRight } from "lucide-react";
+import { Brain, MessageSquare, FileText, Lightbulb, Calendar, MessageCircle, ArrowRight, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface AISelfTherapyModeProps {
   className?: string;
@@ -14,21 +15,78 @@ interface AISelfTherapyModeProps {
 const AISelfTherapyMode = ({ className }: AISelfTherapyModeProps) => {
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [chatHistory, setChatHistory] = useState([
+    { role: "ai", content: "Hello! I'm your AI therapy assistant. I'm here to provide support and guidance for mild to moderate mental health concerns. How are you feeling today?" }
+  ]);
   const { toast } = useToast();
+  
+  // Simulated Socratic responses based on common inputs
+  const socraticResponses = {
+    anxiety: [
+      "What aspects of this situation are causing you the most concern?",
+      "When you notice these anxious thoughts, what typically happens next?",
+      "How would you rate the likelihood of your fear actually happening?",
+      "What evidence do you have that supports or contradicts this worry?"
+    ],
+    depression: [
+      "What activities used to bring you joy that you're not doing currently?",
+      "How would you describe the thoughts that come up when you're feeling low?",
+      "Is there a pattern to when these feelings are strongest or weakest?",
+      "What small step might feel manageable for you right now?"
+    ],
+    work: [
+      "What aspects of your work situation feel most challenging?",
+      "How does this work situation compare to previous experiences?",
+      "What would an ideal outcome look like for you?",
+      "What resources or support might help in this situation?"
+    ],
+    relationships: [
+      "How do you think the other person might view this situation?",
+      "What patterns do you notice in how this relationship functions?",
+      "What needs of yours aren't being met in this interaction?",
+      "How have you handled similar situations in the past?"
+    ],
+    general: [
+      "Could you tell me more about that?",
+      "How does that make you feel?",
+      "What thoughts come up for you when that happens?",
+      "What would be helpful for you right now?"
+    ]
+  };
+  
+  const getAIResponse = (userMessage: string) => {
+    // Simple keyword matching for demo purposes
+    const lowercaseMessage = userMessage.toLowerCase();
+    let responseCategory = "general";
+    
+    if (lowercaseMessage.includes("anxious") || lowercaseMessage.includes("worry") || lowercaseMessage.includes("stress")) {
+      responseCategory = "anxiety";
+    } else if (lowercaseMessage.includes("sad") || lowercaseMessage.includes("depress") || lowercaseMessage.includes("low")) {
+      responseCategory = "depression";
+    } else if (lowercaseMessage.includes("work") || lowercaseMessage.includes("job") || lowercaseMessage.includes("career")) {
+      responseCategory = "work";
+    } else if (lowercaseMessage.includes("relationship") || lowercaseMessage.includes("partner") || lowercaseMessage.includes("friend")) {
+      responseCategory = "relationships";
+    }
+    
+    const responses = socraticResponses[responseCategory as keyof typeof socraticResponses];
+    return responses[Math.floor(Math.random() * responses.length)];
+  };
   
   const handleSendMessage = () => {
     if (!message.trim()) return;
     
+    // Add user message to chat
+    const userMessage = message.trim();
+    setChatHistory(prev => [...prev, { role: "user", content: userMessage }]);
+    setMessage("");
     setIsSending(true);
     
     // Simulate AI response with a delay
     setTimeout(() => {
-      toast({
-        title: "AI Therapist Response",
-        description: "I've received your message and I'm here to help. Let's explore strategies to manage these feelings together.",
-      });
+      const aiResponse = getAIResponse(userMessage);
+      setChatHistory(prev => [...prev, { role: "ai", content: aiResponse }]);
       setIsSending(false);
-      setMessage("");
     }, 1500);
   };
   
@@ -67,15 +125,19 @@ const AISelfTherapyMode = ({ className }: AISelfTherapyModeProps) => {
           </TabsList>
           
           <TabsContent value="chat" className="space-y-4">
-            <div className="border rounded-lg p-4 bg-muted/30 h-48 overflow-y-auto space-y-4">
-              <div className="flex gap-3">
-                <div className="rounded-full bg-therapy-primary h-8 w-8 flex items-center justify-center text-white shrink-0">
-                  AI
+            <div className="border rounded-lg p-4 bg-muted/30 h-72 overflow-y-auto space-y-4">
+              {chatHistory.map((msg, index) => (
+                <div key={index} className="flex gap-3">
+                  <div className={`rounded-full h-8 w-8 flex items-center justify-center text-white shrink-0 ${
+                    msg.role === "ai" ? "bg-therapy-primary" : "bg-gray-500"
+                  }`}>
+                    {msg.role === "ai" ? "AI" : "You"}
+                  </div>
+                  <div className="bg-white rounded-lg p-3 text-sm">
+                    {msg.content}
+                  </div>
                 </div>
-                <div className="bg-white rounded-lg p-3 text-sm">
-                  Hello! I'm your AI therapy assistant. I'm here to provide support and guidance for mild to moderate mental health concerns. How are you feeling today?
-                </div>
-              </div>
+              ))}
             </div>
             
             <div className="flex gap-2">
@@ -89,6 +151,34 @@ const AISelfTherapyMode = ({ className }: AISelfTherapyModeProps) => {
                 {isSending ? "Sending..." : "Send"}
               </Button>
             </div>
+
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="socratic">
+                <AccordionTrigger className="text-sm">
+                  <span className="flex items-center">
+                    <Brain className="h-4 w-4 mr-2 text-therapy-primary" />
+                    About Socratic Dialogue
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="text-xs text-muted-foreground space-y-2">
+                    <p>
+                      Our AI uses Socratic questioning to help you explore your thoughts without rushing to conclusions 
+                      or diagnoses. This method encourages self-discovery through reflective questions.
+                    </p>
+                    <p>
+                      The AI will ask open-ended questions to help you:
+                    </p>
+                    <ul className="list-disc pl-5 space-y-1">
+                      <li>Examine your thought patterns</li>
+                      <li>Consider alternative perspectives</li>
+                      <li>Identify cognitive distortions</li>
+                      <li>Develop your own insights</li>
+                    </ul>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </TabsContent>
           
           <TabsContent value="exercises" className="space-y-4">
@@ -195,6 +285,19 @@ const AISelfTherapyMode = ({ className }: AISelfTherapyModeProps) => {
                 Self-guided therapy with AI assistance for mild to moderate concerns
               </p>
             </div>
+            <Button variant="outline" size="sm" className="gap-1" asChild>
+              <div className="flex items-center gap-1">
+                <Settings className="h-4 w-4" />
+                <span>Customize</span>
+              </div>
+            </Button>
+          </div>
+          
+          <div className="flex items-center justify-between mt-4">
+            <Button variant="outline" size="sm" className="gap-1">
+              <Brain className="h-4 w-4" />
+              Change AI Approach
+            </Button>
             <Button variant="outline" size="sm" className="gap-1">
               <MessageCircle className="h-4 w-4" />
               Get Human Support

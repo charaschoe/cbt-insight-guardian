@@ -1,3 +1,4 @@
+
 import MainLayout from "@/layouts/MainLayout";
 import MoodTracker from "@/components/MoodTracker";
 import ThoughtLog from "@/components/ThoughtLog";
@@ -6,6 +7,8 @@ import WeeklyProgress from "@/components/WeeklyProgress";
 import AIInsights from "@/components/AIInsights";
 import InsightCard from "@/components/InsightCard";
 import AISelfTherapyMode from "@/components/AISelfTherapyMode";
+import AIFramework from "@/components/AIFramework";
+import TherapyModeSelector from "@/components/TherapyModeSelector";
 import { ChevronDown, ChevronUp, HelpCircle, BellRing, Brain } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +21,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAIMode } from "@/hooks/use-ai-mode";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const { isAIMode, toggleAIMode } = useAIMode();
@@ -66,7 +70,25 @@ const Index = () => {
       </div>
 
       {isAIMode ? (
-        <AISelfTherapyMode />
+        <Tabs defaultValue="therapy">
+          <TabsList className="mb-4">
+            <TabsTrigger value="therapy">AI Therapy</TabsTrigger>
+            <TabsTrigger value="approaches">Therapy Approaches</TabsTrigger>
+            <TabsTrigger value="framework">AI Framework</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="therapy">
+            <AISelfTherapyMode />
+          </TabsContent>
+          
+          <TabsContent value="approaches">
+            <TherapyModeSelector />
+          </TabsContent>
+          
+          <TabsContent value="framework">
+            <AIFramework />
+          </TabsContent>
+        </Tabs>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
