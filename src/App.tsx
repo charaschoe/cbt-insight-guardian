@@ -13,6 +13,7 @@ import Progress from "./pages/Progress";
 import Sessions from "./pages/Sessions";
 import Exercises from "./pages/Exercises";
 import Community from "./pages/Community";
+import Profile from "./pages/Profile";
 import TherapistDashboard from "./pages/TherapistDashboard";
 import NotFound from "./pages/NotFound";
 import AIAnalysis from "./pages/AIAnalysis";
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/exercises" element={<Exercises />} />
             <Route path="/exercises/:exerciseId" element={<ExerciseDetail />} />
             <Route path="/community" element={<Community />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
             <Route path="/analysis" element={<AIAnalysis />} />
             <Route path="/patterns/:patternId" element={<PatternDetail />} />

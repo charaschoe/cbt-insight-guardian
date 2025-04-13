@@ -1,7 +1,7 @@
 
 import { useState, useEffect, createContext, useContext } from 'react';
 
-type TherapyMode = 'standard' | 'ai' | 'corporate' | 'clinical';
+type TherapyMode = 'standard' | 'ai' | 'corporate' | 'clinical' | 'relaxation';
 type AIApproach = 'balanced' | 'socratic' | 'cognitive' | 'behavioral' | 'mindfulness' | 'solution-focused';
 type AIDepth = 'basic' | 'advanced' | 'research';
 

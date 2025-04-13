@@ -1,5 +1,5 @@
 
-import { Bell, Menu, Settings, User, MessageCircle, Brain, Briefcase } from "lucide-react";
+import { Bell, Menu, Settings, User, MessageCircle, Brain, Briefcase, HeartPulse, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   DropdownMenu,
@@ -57,9 +57,14 @@ const NavBar = ({ toggleSidebar }: NavBarProps) => {
                       <Briefcase className="h-3 w-3 mr-1" /> Corporate Wellness Mode
                     </span>
                   )}
-                  {therapyMode === 'clinical' && (
+                  {therapyMode === 'relaxation' && (
                     <span className="text-xs text-green-600 flex items-center">
-                      <User className="h-3 w-3 mr-1" /> Clinical Integration Mode
+                      <HeartPulse className="h-3 w-3 mr-1" /> Relaxation Mode
+                    </span>
+                  )}
+                  {therapyMode === 'clinical' && (
+                    <span className="text-xs text-red-600 flex items-center">
+                      <Stethoscope className="h-3 w-3 mr-1" /> Medical Mode
                     </span>
                   )}
                 </>

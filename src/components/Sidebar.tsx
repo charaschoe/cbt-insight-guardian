@@ -7,13 +7,15 @@ import {
   LineChart, 
   Lightbulb,
   Users,
-  MessageCircle
+  MessageCircle,
+  Brain
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAIMode } from "@/hooks/use-ai-mode";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -24,6 +26,7 @@ const Sidebar = ({ isOpen, toggleSidebar }: SidebarProps) => {
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
   const [mounted, setMounted] = useState(false);
+  const { isAIMode } = useAIMode();
 
   useEffect(() => {
     setMounted(true);
@@ -39,6 +42,11 @@ const Sidebar = ({ isOpen, toggleSidebar }: SidebarProps) => {
     { name: "Exercises", path: "/exercises", icon: Lightbulb },
     { name: "Community", path: "/community", icon: Users },
   ];
+
+  // Add AI Analysis link if AI mode is enabled
+  if (isAIMode) {
+    navItems.push({ name: "AI Analysis", path: "/analysis", icon: Brain });
+  }
 
   if (!mounted) return null;
 
