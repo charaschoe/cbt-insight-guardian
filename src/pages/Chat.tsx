@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import { Avatar } from "@/components/ui/avatar";
@@ -14,7 +13,10 @@ import {
   Volume, 
   VolumeX, 
   Brain,
-  AlertCircle 
+  AlertCircle,
+  Lightbulb,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +31,12 @@ type Message = {
   sender: "user" | "ai" | "therapist";
   timestamp: Date;
   isEscalated?: boolean;
+};
+
+type ThoughtProcess = {
+  id: string;
+  type: "observation" | "analysis" | "conclusion" | "question";
+  content: string;
 };
 
 type ChatMode = "text" | "voice";
@@ -48,8 +56,10 @@ const Chat = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [thoughtRating, setThoughtRating] = useState<string | null>(null);
   const [showThoughtPrompt, setShowThoughtPrompt] = useState(false);
-  const [chatMode, setChatMode] = useState<ChatMode>("text");
+  const [chatMode, setChatMode] = useState<ChatMode>("voice");
   const [aiThinking, setAiThinking] = useState(false);
+  const [showThoughtProcess, setShowThoughtProcess] = useState(true);
+  const [thoughtProcessSteps, setThoughtProcessSteps] = useState<ThoughtProcess[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { therapyMode } = useAIMode();
@@ -60,9 +70,8 @@ const Chat = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, thoughtProcessSteps]);
 
-  // CBT question patterns based on user input
   const cbtQuestions = {
     anxiety: [
       "What are you feeling anxious about specifically?",
@@ -102,7 +111,6 @@ const Chat = () => {
     ],
   };
 
-  // Simulate AI analyzing user input for escalation
   const shouldEscalateToTherapist = (message: string): boolean => {
     const emergencyKeywords = [
       "suicide", "kill myself", "end my life", "harm myself", 
@@ -133,21 +141,69 @@ const Chat = () => {
     return "general";
   };
 
-  // Get an AI response based on CBT techniques
+  const generateThoughtProcess = (userMessage: string): ThoughtProcess[] => {
+    const category = determineCategory(userMessage);
+    const thoughts: ThoughtProcess[] = [];
+    
+    thoughts.push({
+      id: Date.now().toString(),
+      type: "observation",
+      content: `User message mentions keywords related to ${category}. Tone suggests ${
+        category === "anxiety" ? "heightened worry" : 
+        category === "depression" ? "low mood" :
+        category === "stress" ? "feeling overwhelmed" :
+        category === "relationships" ? "attribution errors or communication patterns" :
+        category === "work" ? "performance anxiety or imposter syndrome" : "unclear thought patterns"
+      }.`
+    });
+    
+    thoughts.push({
+      id: (Date.now() + 1).toString(),
+      type: "analysis",
+      content: `Based on CBT frameworks, this appears to be a potential case of ${
+        category === "anxiety" ? "catastrophic thinking and future-focused worry" : 
+        category === "depression" ? "negative self-perception and past-focused rumination" :
+        category === "stress" ? "perception of inadequate coping resources" :
+        category === "relationships" ? "attribution errors or communication patterns" :
+        category === "work" ? "performance anxiety or imposter syndrome" : "unclear thought patterns"
+      }. Checking for cognitive distortions...`
+    });
+    
+    const techniques = {
+      anxiety: ["thought challenging", "decatastrophizing", "grounding techniques"],
+      depression: ["behavioral activation", "thought records", "gratitude practice"],
+      stress: ["problem-solving matrix", "stress inventory", "mindfulness"],
+      relationships: ["perspective-taking", "communication skills", "boundary setting"],
+      work: ["task breakdown", "success journaling", "identity affirmation"],
+      general: ["mindful awareness", "cognitive restructuring", "behavioral experiments"]
+    };
+    
+    thoughts.push({
+      id: (Date.now() + 2).toString(),
+      type: "conclusion",
+      content: `Recommended approach: ${techniques[category].join(", ")}. Will ask probing questions to help user identify thought patterns before suggesting specific techniques.`
+    });
+    
+    thoughts.push({
+      id: (Date.now() + 3).toString(),
+      type: "question",
+      content: `Selecting appropriate Socratic question from CBT framework to explore ${category}-related thoughts without reinforcing cognitive distortions.`
+    });
+    
+    return thoughts;
+  };
+
   const generateAIResponse = (userMessage: string): string => {
     const category = determineCategory(userMessage);
     const questions = cbtQuestions[category];
     
-    // Randomly select a question appropriate to the detected category
     const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
     
-    // Occasionally prompt for thought rating after a few exchanges
     if (messages.length % 3 === 0 && !showThoughtPrompt) {
       setShowThoughtPrompt(true);
       return "Before we continue, I'd like to understand how you're evaluating this situation. On a scale of 1-5, how realistic do you think your thoughts about this situation are?";
     }
     
-    // Occasionally provide a CBT technique based on the conversation
     if (messages.length % 5 === 0) {
       switch(category) {
         case "anxiety":
@@ -167,7 +223,6 @@ const Chat = () => {
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
     
-    // Add user message
     const userMessageObj: Message = {
       id: Date.now().toString(),
       content: newMessage,
@@ -180,15 +235,18 @@ const Chat = () => {
     setAiThinking(true);
     setShowThoughtPrompt(false);
     
-    // Check if this needs therapist escalation
-    const needsEscalation = shouldEscalateToTherapist(newMessage);
+    setTimeout(() => {
+      const thoughts = generateThoughtProcess(userMessage);
+      setThoughtProcessSteps(thoughts);
+    }, 500);
     
-    // Simulate AI response or therapist intervention
+    const needsEscalation = shouldEscalateToTherapist(newMessage);
+    const userMessage = newMessage;
+    
     setTimeout(() => {
       setAiThinking(false);
       
       if (needsEscalation) {
-        // Add escalation message from AI
         const escalationMessage: Message = {
           id: (Date.now() + 1).toString(),
           content: "I'm concerned about what you've shared. I'm connecting you with a human therapist for immediate support. They'll be with you momentarily.",
@@ -199,7 +257,6 @@ const Chat = () => {
         
         setMessages(prev => [...prev, escalationMessage]);
         
-        // Simulate therapist joining after a short delay
         setTimeout(() => {
           const therapistMessage: Message = {
             id: (Date.now() + 2).toString(),
@@ -217,8 +274,7 @@ const Chat = () => {
           });
         }, 3000);
       } else {
-        // Normal AI response
-        const aiResponse = generateAIResponse(newMessage);
+        const aiResponse = generateAIResponse(userMessage);
         const aiMessage: Message = {
           id: (Date.now() + 1).toString(),
           content: aiResponse,
@@ -227,18 +283,17 @@ const Chat = () => {
         };
         
         setMessages(prev => [...prev, aiMessage]);
+        setThoughtProcessSteps([]);
         
-        // If in voice mode, speak the response
         if (chatMode === "voice" && !isSpeaking) {
           speakMessage(aiResponse);
         }
       }
-    }, 1500);
+    }, 3000);
   };
 
   const handleToggleMic = () => {
     if (!isRecording) {
-      // Request microphone access
       navigator.mediaDevices.getUserMedia({ audio: true })
         .then(() => {
           setIsRecording(true);
@@ -247,13 +302,11 @@ const Chat = () => {
             description: "I'm listening... Speak clearly and I'll respond when you're done.",
           });
           
-          // Simulate speech recognition (in a real app, use Web Speech API or similar)
           setTimeout(() => {
             setIsRecording(false);
             const simulatedTranscript = "I've been feeling anxious about an upcoming presentation at work.";
             setNewMessage(simulatedTranscript);
             
-            // Auto-send after a short delay
             setTimeout(() => {
               handleSendMessage();
             }, 500);
@@ -277,7 +330,6 @@ const Chat = () => {
   };
 
   const speakMessage = (text: string) => {
-    // Basic implementation of text-to-speech
     if ('speechSynthesis' in window) {
       setIsSpeaking(true);
       const utterance = new SpeechSynthesisUtterance(text);
@@ -297,7 +349,6 @@ const Chat = () => {
       speechSynthesis.cancel();
       setIsSpeaking(false);
     } else {
-      // Find the last AI message
       const lastAiMessage = [...messages].reverse().find(msg => msg.sender === "ai");
       if (lastAiMessage) {
         speakMessage(lastAiMessage.content);
@@ -308,7 +359,6 @@ const Chat = () => {
   const handleThoughtRatingSubmit = () => {
     if (!thoughtRating) return;
     
-    // Add user rating as a message
     const ratingMessage: Message = {
       id: Date.now().toString(),
       content: `I rated my thought as ${thoughtRating}/5 in terms of how realistic it is.`,
@@ -321,7 +371,6 @@ const Chat = () => {
     setShowThoughtPrompt(false);
     setAiThinking(true);
     
-    // Simulate AI response based on rating
     setTimeout(() => {
       setAiThinking(false);
       const rating = parseInt(thoughtRating);
@@ -350,13 +399,17 @@ const Chat = () => {
     }, 1500);
   };
 
+  const toggleThoughtProcess = () => {
+    setShowThoughtProcess(prev => !prev);
+  };
+
   return (
     <MainLayout>
       <div className="mb-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-semibold">AI Therapy Chat</h1>
-            <p className="text-muted-foreground">Chat with an AI trained in CBT techniques</p>
+            <p className="text-muted-foreground">Using advanced CBT techniques with voice interaction</p>
           </div>
           <div className="flex items-center gap-2">
             <Button 
@@ -377,10 +430,18 @@ const Chat = () => {
               <Mic className="h-4 w-4" />
               Voice
             </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1"
+              onClick={toggleThoughtProcess}
+            >
+              <Brain className="h-4 w-4" />
+              {showThoughtProcess ? "Hide Reasoning" : "Show Reasoning"}
+            </Button>
           </div>
         </div>
         
-        {/* Mode indicator */}
         <div className="mt-2">
           <Badge className="bg-therapy-primary">
             {therapyMode === 'standard' && 'Standard Mode'}
@@ -393,132 +454,144 @@ const Chat = () => {
 
       <div className="grid grid-cols-1 gap-6">
         <Card className="flex flex-col h-[calc(100vh-220px)]">
-          {/* Chat header */}
           <div className="p-4 border-b">
             <div className="flex items-center gap-3">
-              {chatMode === 'voice' ? (
-                <div className={`relative rounded-full h-12 w-12 flex items-center justify-center ${isRecording || isSpeaking || aiThinking ? 'bg-therapy-primary' : 'bg-muted'} transition-colors duration-300`}>
-                  <Brain className={`h-6 w-6 ${isRecording || isSpeaking || aiThinking ? 'text-white' : 'text-therapy-primary'}`} />
-                  {(isRecording || isSpeaking || aiThinking) && (
-                    <div className="absolute inset-0 rounded-full border-2 border-therapy-primary animate-pulse" />
-                  )}
-                </div>
-              ) : (
-                <Avatar className="h-12 w-12">
-                  <div className="bg-therapy-primary text-white rounded-full h-full w-full flex items-center justify-center text-lg font-semibold">
-                    AI
-                  </div>
-                </Avatar>
-              )}
+              <div className={`relative rounded-full h-12 w-12 flex items-center justify-center ${isRecording || isSpeaking || aiThinking ? 'bg-therapy-primary' : 'bg-muted'} transition-colors duration-300`}>
+                <Brain className={`h-6 w-6 ${isRecording || isSpeaking || aiThinking ? 'text-white' : 'text-therapy-primary'}`} />
+                {(isRecording || isSpeaking || aiThinking) && (
+                  <div className="absolute inset-0 rounded-full border-2 border-therapy-primary animate-pulse" />
+                )}
+              </div>
               <div>
                 <h3 className="font-medium">AI Therapy Assistant</h3>
                 <p className="text-xs text-muted-foreground">
-                  Using CBT techniques • {aiThinking ? 'Thinking...' : 'Online'}
+                  {isRecording ? 'Listening...' : isSpeaking ? 'Speaking...' : aiThinking ? 'Thinking...' : 'Ready'}
                 </p>
               </div>
             </div>
           </div>
           
-          {/* Messages area */}
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
-              {messages.map((message) => (
-                <div 
-                  key={message.id} 
-                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  {message.sender !== 'user' && (
-                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center mr-2">
-                      {message.sender === 'ai' ? (
-                        <Brain className="h-4 w-4 text-therapy-primary" />
-                      ) : (
-                        <div className="bg-green-600 text-white rounded-full h-full w-full flex items-center justify-center text-xs font-semibold">
-                          DR
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  
+          <div className="flex flex-1 overflow-hidden">
+            <ScrollArea className={`p-4 ${showThoughtProcess && thoughtProcessSteps.length > 0 ? 'w-2/3' : 'w-full'}`}>
+              <div className="space-y-4">
+                {messages.map((message) => (
                   <div 
-                    className={`max-w-[80%] rounded-lg p-3 ${
-                      message.sender === 'user' 
-                        ? 'bg-therapy-primary text-white' 
-                        : message.sender === 'therapist'
-                          ? 'bg-green-100 border border-green-300'
-                          : message.isEscalated
-                            ? 'bg-yellow-50 border border-yellow-300'
-                            : 'bg-muted'
-                    }`}
+                    key={message.id} 
+                    className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    {message.isEscalated && (
-                      <div className="flex items-center gap-1 mb-2 text-yellow-700">
-                        <AlertCircle className="h-4 w-4" />
-                        <span className="text-xs font-semibold">Escalating to human therapist</span>
+                    {message.sender !== 'user' && (
+                      <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center mr-2">
+                        {message.sender === 'ai' ? (
+                          <Brain className="h-4 w-4 text-therapy-primary" />
+                        ) : (
+                          <div className="bg-green-600 text-white rounded-full h-full w-full flex items-center justify-center text-xs font-semibold">
+                            DR
+                          </div>
+                        )}
                       </div>
                     )}
                     
-                    <p className="text-sm whitespace-pre-line">{message.content}</p>
-                    <p className="text-xs mt-1 opacity-70">
-                      {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  
-                  {message.sender === 'user' && (
-                    <div className="h-8 w-8 rounded-full bg-therapy-primary flex items-center justify-center ml-2">
-                      <span className="text-white text-xs">You</span>
+                    <div 
+                      className={`max-w-[80%] rounded-lg p-3 ${
+                        message.sender === 'user' 
+                          ? 'bg-therapy-primary text-white' 
+                          : message.sender === 'therapist'
+                            ? 'bg-green-100 border border-green-300'
+                            : message.isEscalated
+                              ? 'bg-yellow-50 border border-yellow-300'
+                              : 'bg-muted'
+                      }`}
+                    >
+                      {message.isEscalated && (
+                        <div className="flex items-center gap-1 mb-2 text-yellow-700">
+                          <AlertCircle className="h-4 w-4" />
+                          <span className="text-xs font-semibold">Escalating to human therapist</span>
+                        </div>
+                      )}
+                      
+                      <p className="text-sm whitespace-pre-line">{message.content}</p>
+                      <p className="text-xs mt-1 opacity-70">
+                        {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
                     </div>
-                  )}
-                </div>
-              ))}
-              
-              {/* AI thinking indicator */}
-              {aiThinking && (
-                <div className="flex justify-start">
-                  <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center mr-2">
-                    <Brain className="h-4 w-4 text-therapy-primary" />
-                  </div>
-                  <div className="bg-muted rounded-lg p-3 max-w-[80%]">
-                    <div className="flex space-x-1">
-                      <div className="h-2 w-2 bg-therapy-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                      <div className="h-2 w-2 bg-therapy-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                      <div className="h-2 w-2 bg-therapy-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {/* Thought rating prompt */}
-              {showThoughtPrompt && !aiThinking && (
-                <div className="bg-therapy-light border border-therapy-muted rounded-lg p-4 my-4">
-                  <h4 className="font-medium text-sm mb-2">Rate how realistic you believe your thoughts are:</h4>
-                  <RadioGroup value={thoughtRating || ""} onValueChange={setThoughtRating} className="flex space-x-2 mb-3">
-                    {[1, 2, 3, 4, 5].map((value) => (
-                      <div key={value} className="flex items-center space-x-1">
-                        <RadioGroupItem value={value.toString()} id={`rating-${value}`} />
-                        <Label htmlFor={`rating-${value}`}>{value}</Label>
+                    
+                    {message.sender === 'user' && (
+                      <div className="h-8 w-8 rounded-full bg-therapy-primary flex items-center justify-center ml-2">
+                        <span className="text-white text-xs">You</span>
                       </div>
-                    ))}
-                  </RadioGroup>
-                  <div className="flex justify-between text-xs text-muted-foreground mb-3">
-                    <span>Not realistic at all</span>
-                    <span>Completely realistic</span>
+                    )}
                   </div>
-                  <Button 
-                    size="sm" 
-                    onClick={handleThoughtRatingSubmit}
-                    disabled={!thoughtRating}
-                    className="w-full"
-                  >
-                    Submit Rating
-                  </Button>
+                ))}
+                
+                {aiThinking && (
+                  <div className="flex justify-start">
+                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center mr-2">
+                      <Brain className="h-4 w-4 text-therapy-primary" />
+                    </div>
+                    <div className="bg-muted rounded-lg p-3 max-w-[80%]">
+                      <div className="flex space-x-1">
+                        <div className="h-2 w-2 bg-therapy-primary rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="h-2 w-2 bg-therapy-primary rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="h-2 w-2 bg-therapy-primary rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                {showThoughtPrompt && !aiThinking && (
+                  <div className="bg-therapy-light border border-therapy-muted rounded-lg p-4 my-4">
+                    <h4 className="font-medium text-sm mb-2">Rate how realistic you believe your thoughts are:</h4>
+                    <RadioGroup value={thoughtRating || ""} onValueChange={setThoughtRating} className="flex space-x-2 mb-3">
+                      {[1, 2, 3, 4, 5].map((value) => (
+                        <div key={value} className="flex items-center space-x-1">
+                          <RadioGroupItem value={value.toString()} id={`rating-${value}`} />
+                          <Label htmlFor={`rating-${value}`}>{value}</Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                    <div className="flex justify-between text-xs text-muted-foreground mb-3">
+                      <span>Not realistic at all</span>
+                      <span>Completely realistic</span>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      onClick={handleThoughtRatingSubmit}
+                      disabled={!thoughtRating}
+                      className="w-full"
+                    >
+                      Submit Rating
+                    </Button>
+                  </div>
+                )}
+                
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+            
+            {showThoughtProcess && thoughtProcessSteps.length > 0 && (
+              <div className="w-1/3 border-l p-4 bg-gray-50 overflow-auto">
+                <h3 className="font-medium text-sm mb-3 flex items-center gap-2">
+                  <Brain className="h-4 w-4 text-therapy-primary" />
+                  AI Reasoning Process
+                </h3>
+                <div className="space-y-3">
+                  {thoughtProcessSteps.map((step) => (
+                    <div key={step.id} className="bg-white rounded-lg p-3 border">
+                      <div className="flex items-center gap-2 mb-1">
+                        {step.type === "observation" && <AlertCircle className="h-4 w-4 text-blue-500" />}
+                        {step.type === "analysis" && <Brain className="h-4 w-4 text-therapy-primary" />}
+                        {step.type === "conclusion" && <CheckCircle className="h-4 w-4 text-green-500" />}
+                        {step.type === "question" && <Lightbulb className="h-4 w-4 text-amber-500" />}
+                        <h4 className="text-xs font-medium capitalize">{step.type}</h4>
+                      </div>
+                      <p className="text-xs text-gray-700">{step.content}</p>
+                    </div>
+                  ))}
                 </div>
-              )}
-              
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
+              </div>
+            )}
+          </div>
           
-          {/* Input area */}
           <div className="p-4 border-t">
             {chatMode === 'text' ? (
               <form 
@@ -534,7 +607,6 @@ const Chat = () => {
                   placeholder="Type your message..."
                   className="flex-1 resize-none"
                   rows={1}
-                  maxRows={3}
                 />
                 <Button type="submit" size="icon" disabled={!newMessage.trim() || aiThinking}>
                   <Send className="h-4 w-4" />
@@ -542,52 +614,37 @@ const Chat = () => {
               </form>
             ) : (
               <div className="flex flex-col gap-3">
-                <div className="flex gap-2">
-                  <Input 
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Voice transcript will appear here..."
-                    className="flex-1"
-                    readOnly={isRecording}
-                  />
-                  <Button 
-                    type="button" 
-                    size="icon" 
-                    onClick={handleSendMessage}
-                    disabled={!newMessage.trim() || isRecording || aiThinking}
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="flex justify-center gap-4">
-                  <Button 
+                <div className="flex justify-center">
+                  <button
                     type="button"
-                    variant="outline"
-                    size="sm"
-                    className={`gap-2 ${isRecording ? 'bg-red-100' : ''}`}
                     onClick={handleToggleMic}
+                    className={`rounded-full p-5 ${
+                      isRecording 
+                        ? 'bg-red-100 border-2 border-red-500' 
+                        : 'bg-therapy-primary text-white hover:bg-therapy-primary/90'
+                    } transition-all duration-300 flex items-center justify-center`}
+                    disabled={aiThinking}
                   >
                     {isRecording ? (
-                      <>
-                        <MicOff className="h-4 w-4 text-red-500" />
-                        <span className="text-red-500">Stop</span>
-                      </>
+                      <MicOff className="h-8 w-8 text-red-500" />
                     ) : (
-                      <>
-                        <Mic className="h-4 w-4" />
-                        <span>Speak</span>
-                      </>
+                      <Mic className="h-8 w-8" />
                     )}
-                  </Button>
-                  
+                  </button>
+                </div>
+                
+                <div className="text-center text-sm">
+                  {isRecording ? "Listening... Click to stop" : "Click to start speaking"}
+                </div>
+                
+                <div className="flex justify-center gap-4 mt-2">
                   <Button 
                     type="button"
                     variant="outline"
                     size="sm"
                     className="gap-2"
                     onClick={handleToggleSpeech}
-                    disabled={messages.length <= 1}
+                    disabled={messages.length <= 1 || isRecording}
                   >
                     {isSpeaking ? (
                       <>
@@ -602,6 +659,26 @@ const Chat = () => {
                     )}
                   </Button>
                 </div>
+                
+                {!isRecording && newMessage && (
+                  <div className="mt-2">
+                    <p className="text-xs text-muted-foreground mb-1">Transcript:</p>
+                    <div className="bg-muted p-2 rounded-md text-sm">
+                      {newMessage}
+                    </div>
+                    <div className="flex justify-end mt-2">
+                      <Button 
+                        type="button" 
+                        size="sm" 
+                        onClick={handleSendMessage}
+                        disabled={!newMessage.trim() || aiThinking}
+                      >
+                        <Send className="h-4 w-4 mr-1" />
+                        Send
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
             
