@@ -9,7 +9,11 @@ import InsightCard from "@/components/InsightCard";
 import AISelfTherapyMode from "@/components/AISelfTherapyMode";
 import AIFramework from "@/components/AIFramework";
 import TherapyModeSelector from "@/components/TherapyModeSelector";
-import { ChevronDown, ChevronUp, HelpCircle, BellRing, Brain } from "lucide-react";
+import AIPatternDetection from "@/components/ai/AIPatternDetection";
+import AIThemeAnalysis from "@/components/ai/AIThemeAnalysis";
+import AIThoughtExercises from "@/components/ai/AIThoughtExercises";
+import AIResearchSequence from "@/components/ai/AIResearchSequence";
+import { ChevronDown, ChevronUp, HelpCircle, BellRing, Brain, ArrowRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
@@ -22,6 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAIMode } from "@/hooks/use-ai-mode";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const { isAIMode, toggleAIMode } = useAIMode();
@@ -73,12 +78,34 @@ const Index = () => {
         <Tabs defaultValue="therapy">
           <TabsList className="mb-4">
             <TabsTrigger value="therapy">AI Therapy</TabsTrigger>
+            <TabsTrigger value="analysis">AI Analysis</TabsTrigger>
             <TabsTrigger value="approaches">Therapy Approaches</TabsTrigger>
             <TabsTrigger value="framework">AI Framework</TabsTrigger>
           </TabsList>
           
           <TabsContent value="therapy">
             <AISelfTherapyMode />
+          </TabsContent>
+
+          <TabsContent value="analysis">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <AIPatternDetection />
+              <AIThemeAnalysis />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <AIThoughtExercises />
+              <AIResearchSequence />
+            </div>
+            
+            <div className="text-center mt-4">
+              <Button asChild>
+                <Link to="/analysis" className="flex items-center">
+                  Explore Full AI Analysis
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </TabsContent>
           
           <TabsContent value="approaches">

@@ -15,6 +15,10 @@ import Exercises from "./pages/Exercises";
 import Community from "./pages/Community";
 import TherapistDashboard from "./pages/TherapistDashboard";
 import NotFound from "./pages/NotFound";
+import AIAnalysis from "./pages/AIAnalysis";
+import PatternDetail from "./pages/PatternDetail";
+import ThemeDetail from "./pages/ThemeDetail";
+import ExerciseDetail from "./pages/ExerciseDetail";
 
 const queryClient = new QueryClient();
 
@@ -33,8 +37,12 @@ const App = () => (
             <Route path="/progress" element={<Progress />} />
             <Route path="/sessions" element={<Sessions />} />
             <Route path="/exercises" element={<Exercises />} />
+            <Route path="/exercises/:exerciseId" element={<ExerciseDetail />} />
             <Route path="/community" element={<Community />} />
             <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
+            <Route path="/analysis" element={<AIAnalysis />} />
+            <Route path="/patterns/:patternId" element={<PatternDetail />} />
+            <Route path="/themes/:themeId" element={<ThemeDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
