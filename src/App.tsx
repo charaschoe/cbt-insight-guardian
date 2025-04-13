@@ -20,6 +20,7 @@ import AIAnalysis from "./pages/AIAnalysis";
 import PatternDetail from "./pages/PatternDetail";
 import ThemeDetail from "./pages/ThemeDetail";
 import ExerciseDetail from "./pages/ExerciseDetail";
+import EmergencySupport from "./pages/EmergencySupport";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/analysis" element={<AIAnalysis />} />
             <Route path="/patterns/:patternId" element={<PatternDetail />} />
             <Route path="/themes/:themeId" element={<ThemeDetail />} />
+            <Route path="/emergency" element={<EmergencySupport />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

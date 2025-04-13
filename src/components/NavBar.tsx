@@ -14,6 +14,7 @@ import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAIMode } from "@/hooks/use-ai-mode";
 import { Badge } from "@/components/ui/badge";
+import SOSButton from "./SOSButton";
 
 interface NavBarProps {
   toggleSidebar?: () => void;
@@ -74,6 +75,8 @@ const NavBar = ({ toggleSidebar }: NavBarProps) => {
         </div>
 
         <div className="flex items-center gap-2">
+          <SOSButton />
+          
           <Button variant="ghost" size="icon" asChild>
             <Link to="/chat">
               <MessageCircle className="h-5 w-5" />

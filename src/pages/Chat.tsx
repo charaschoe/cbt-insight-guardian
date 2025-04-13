@@ -24,6 +24,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useAIMode } from "@/hooks/use-ai-mode";
+import { useNavigate, useLocation } from "react-router-dom";
+import SOSButton from "@/components/SOSButton";
 
 type Message = {
   id: string;
@@ -63,6 +65,17 @@ const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { therapyMode } = useAIMode();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const isEmergency = searchParams.get('emergency') === 'true';
+    
+    if (isEmergency) {
+      navigate('/emergency');
+    }
+  }, [location, navigate]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -258,21 +271,16 @@ const Chat = () => {
         setMessages(prev => [...prev, escalationMessage]);
         
         setTimeout(() => {
-          const therapistMessage: Message = {
-            id: (Date.now() + 2).toString(),
-            content: "Hi there, I'm Dr. Rebecca. I'm here to provide immediate support. Let's talk about what you're experiencing right now. Can you tell me more about your immediate concerns?",
-            sender: "therapist",
-            timestamp: new Date(),
-          };
-          
-          setMessages(prev => [...prev, therapistMessage]);
-          
           toast({
-            title: "Human therapist has joined the chat",
-            description: "You've been connected with a licensed therapist for immediate support",
-            variant: "default",
+            title: "Emergency Protocol Activated",
+            description: "Redirecting you to our emergency support system",
+            variant: "destructive",
           });
-        }, 3000);
+          
+          setTimeout(() => {
+            navigate('/emergency');
+          }, 1500);
+        }, 2000);
       } else {
         const aiResponse = generateAIResponse(userMessage);
         const aiMessage: Message = {
@@ -412,6 +420,7 @@ const Chat = () => {
             <p className="text-muted-foreground">Using advanced CBT techniques with voice interaction</p>
           </div>
           <div className="flex items-center gap-2">
+            <SOSButton />
             <Button 
               variant="outline" 
               size="sm" 
