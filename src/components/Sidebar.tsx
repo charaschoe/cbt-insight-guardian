@@ -53,11 +53,11 @@ const Sidebar = ({ isOpen, toggleSidebar }: SidebarProps) => {
   return (
     <div 
       className={cn(
-        "fixed inset-y-0 left-0 z-20 flex flex-col w-64 bg-card border-r transition-transform duration-300 ease-in-out",
-        isMobile && !isOpen && "-translate-x-full"
+        "fixed inset-y-0 left-0 z-20 flex flex-col w-64 bg-card border-r shadow-lg transition-transform duration-300 ease-in-out",
+        isMobile && !isOpen ? "-translate-x-full" : "translate-x-0"
       )}
     >
-      <div className="p-4 flex-1">
+      <div className="p-4 flex-1 overflow-y-auto">
         <div className="space-y-6">
           <div className="space-y-2">
             {navItems.map((item) => (

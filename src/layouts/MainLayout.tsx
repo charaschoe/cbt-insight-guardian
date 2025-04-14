@@ -20,9 +20,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   return (
     <div className="min-h-screen flex w-full">
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
-      <div className="flex-1">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'}`}>
         <NavBar toggleSidebar={toggleSidebar} />
-        <main className="p-4">
+        <main className="p-4 flex-1 overflow-auto">
           {children}
         </main>
         <FloatingSOS />
