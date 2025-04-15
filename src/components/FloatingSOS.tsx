@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -18,7 +18,22 @@ import {
 const FloatingSOS = () => {
   const [isMinimized, setIsMinimized] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [hasBeenShown, setHasBeenShown] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check localStorage to see if the SOS popup has been shown before
+    const sosShown = localStorage.getItem('sosPopupShown');
+    if (sosShown) {
+      // If it's been shown before, start minimized
+      setIsMinimized(true);
+      setHasBeenShown(true);
+    } else {
+      // If it's the first time, mark it as shown in localStorage
+      localStorage.setItem('sosPopupShown', 'true');
+      setHasBeenShown(false);
+    }
+  }, []);
 
   const handleEmergencyConnect = () => {
     setIsConnecting(true);
@@ -28,6 +43,11 @@ const FloatingSOS = () => {
       navigate('/emergency');
     }, 1500);
   };
+
+  // If it should never be shown (already seen and dismissed), return null
+  if (hasBeenShown && isMinimized) {
+    return null;
+  }
 
   if (isMinimized) {
     return (

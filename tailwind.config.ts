@@ -64,13 +64,37 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				therapy: {
-					primary: '#4C8BF5',
-					secondary: '#63B3ED',
-					accent: '#81E6D9',
-					muted: '#E6F7FF',
-					light: '#F0F9FF',
-					dark: '#2C5282',
-				}
+					primary: 'var(--therapy-primary)',
+					secondary: 'var(--therapy-secondary)',
+					accent: 'var(--therapy-accent)',
+					muted: 'var(--therapy-muted)',
+					light: 'var(--therapy-light)',
+					dark: 'var(--therapy-dark)',
+				},
+				clinical: {
+					primary: 'var(--clinical-primary)',
+					secondary: 'var(--clinical-secondary)',
+					accent: 'var(--clinical-accent)',
+					muted: 'var(--clinical-muted)',
+					light: 'var(--clinical-light)',
+					dark: 'var(--clinical-dark)',
+				},
+				corporate: {
+					primary: 'var(--corporate-primary)',
+					secondary: 'var(--corporate-secondary)',
+					accent: 'var(--corporate-accent)',
+					muted: 'var(--corporate-muted)',
+					light: 'var(--corporate-light)',
+					dark: 'var(--corporate-dark)',
+				},
+				relaxation: {
+					primary: 'var(--relaxation-primary)',
+					secondary: 'var(--relaxation-secondary)',
+					accent: 'var(--relaxation-accent)',
+					muted: 'var(--relaxation-muted)',
+					light: 'var(--relaxation-light)',
+					dark: 'var(--relaxation-dark)',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -111,13 +135,19 @@ export default {
 					'50%': {
 						opacity: 0.8
 					}
+				},
+				'wave': {
+					'0%': { transform: 'scale(0)' },
+					'50%': { transform: 'scale(1)' },
+					'100%': { transform: 'scale(0)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'fade-in': 'fade-in 0.5s ease-out',
-				'pulse-soft': 'pulse-soft 3s ease-in-out infinite'
+				'pulse-soft': 'pulse-soft 3s ease-in-out infinite',
+				'wave': 'wave 2s linear infinite'
 			}
 		}
 	},
