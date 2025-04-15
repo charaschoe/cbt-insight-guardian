@@ -1,6 +1,6 @@
 
 import MainLayout from "@/layouts/MainLayout";
-import { LineChart, Brain, Heart, Activity, AlertTriangle, InfoButton } from "lucide-react";
+import { LineChart, Brain, Heart, Activity, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AIInsightsSection from "@/components/ai/AIInsightsSection";
 import PersonalizedInsightsSection from "@/components/ai/PersonalizedInsightsSection";
 import AITherapyModeTab from "@/components/ai/AITherapyModeTab";
-import { InfoButton as InfoButtonComponent } from "@/components/ui/info-button";
+import { InfoButton } from "@/components/ui/info-button";
 
 const Insights = () => {
   return (
@@ -18,7 +18,7 @@ const Insights = () => {
           <h1 className="text-2xl font-semibold">Insights</h1>
           <p className="text-muted-foreground">Personalized insights based on your data</p>
         </div>
-        <InfoButtonComponent 
+        <InfoButton 
           tooltip="These insights are generated based on your journal entries, therapy sessions, and other data you've shared with the platform."
         />
       </div>

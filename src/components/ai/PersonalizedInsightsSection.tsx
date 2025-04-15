@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lightbulb, MoodSad, ArrowRight, TreePine } from "lucide-react";
+import { Lightbulb, Frown, ArrowRight, TreePine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -38,7 +38,7 @@ const PersonalizedInsightsSection = ({ className }: PersonalizedInsightsSectionP
               <CardContent className="p-3">
                 <div className="flex items-center gap-2 mb-1">
                   <div className="rounded-full bg-therapy-primary/10 p-1.5">
-                    <MoodSad className="h-4 w-4 text-therapy-primary" />
+                    <Frown className="h-4 w-4 text-therapy-primary" />
                   </div>
                   <h3 className="text-sm font-medium">Thought Patterns</h3>
                 </div>
