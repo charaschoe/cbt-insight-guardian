@@ -18,7 +18,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const { isOnboardingActive } = useOnboarding();
-  const [sosOpen, setSosOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {

@@ -18,9 +18,10 @@ import SOSButton from "./SOSButton";
 
 interface NavBarProps {
   toggleSidebar?: () => void;
+  children?: React.ReactNode;
 }
 
-const NavBar = ({ toggleSidebar }: NavBarProps) => {
+const NavBar = ({ toggleSidebar, children }: NavBarProps) => {
   const isMobile = useIsMobile();
   const [notifications] = useState(2);
   const location = useLocation();
@@ -75,6 +76,7 @@ const NavBar = ({ toggleSidebar }: NavBarProps) => {
         </div>
 
         <div className="flex items-center gap-2">
+          {children}
           <SOSButton />
           
           <Button variant="ghost" size="icon" asChild>
