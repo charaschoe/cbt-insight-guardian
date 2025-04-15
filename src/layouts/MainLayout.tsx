@@ -4,6 +4,8 @@ import NavBar from "@/components/NavBar";
 import Sidebar from "@/components/Sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import FloatingSOS from "@/components/FloatingSOS";
+import OnboardingExperience from "@/components/onboarding/OnboardingExperience";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -12,6 +14,7 @@ interface MainLayoutProps {
 const MainLayout = ({ children }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const { isOnboardingActive } = useOnboarding();
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -27,6 +30,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
         <FloatingSOS />
       </div>
+      
+      {/* Onboarding Experience */}
+      {isOnboardingActive && <OnboardingExperience />}
     </div>
   );
 };

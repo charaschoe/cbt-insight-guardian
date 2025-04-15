@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AIProvider } from "@/hooks/use-ai-mode";
+import { OnboardingProvider } from "@/hooks/use-onboarding";
 import Index from "./pages/Index";
 import Journal from "./pages/Journal";
 import Chat from "./pages/Chat";
@@ -27,31 +28,33 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AIProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/journal" element={<Journal />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/insights" element={<Insights />} />
-            <Route path="/progress" element={<Progress />} />
-            <Route path="/sessions" element={<Sessions />} />
-            <Route path="/exercises" element={<Exercises />} />
-            <Route path="/exercises/:exerciseId" element={<ExerciseDetail />} />
-            <Route path="/community" element={<Community />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
-            <Route path="/analysis" element={<AIAnalysis />} />
-            <Route path="/patterns/:patternId" element={<PatternDetail />} />
-            <Route path="/themes/:themeId" element={<ThemeDetail />} />
-            <Route path="/emergency" element={<EmergencySupport />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <BrowserRouter>
+        <OnboardingProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/journal" element={<Journal />} />
+              <Route path="/chat" element={<Chat />} />
+              <Route path="/insights" element={<Insights />} />
+              <Route path="/progress" element={<Progress />} />
+              <Route path="/sessions" element={<Sessions />} />
+              <Route path="/exercises" element={<Exercises />} />
+              <Route path="/exercises/:exerciseId" element={<ExerciseDetail />} />
+              <Route path="/community" element={<Community />} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/therapist-dashboard" element={<TherapistDashboard />} />
+              <Route path="/analysis" element={<AIAnalysis />} />
+              <Route path="/patterns/:patternId" element={<PatternDetail />} />
+              <Route path="/themes/:themeId" element={<ThemeDetail />} />
+              <Route path="/emergency" element={<EmergencySupport />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </TooltipProvider>
+        </OnboardingProvider>
+      </BrowserRouter>
     </AIProvider>
   </QueryClientProvider>
 );

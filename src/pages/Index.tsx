@@ -1,4 +1,3 @@
-
 import MainLayout from "@/layouts/MainLayout";
 import MoodTracker from "@/components/MoodTracker";
 import ThoughtLog from "@/components/ThoughtLog";
@@ -22,24 +21,24 @@ import {
   TooltipProvider,
   TooltipTrigger 
 } from "@/components/ui/tooltip";
-import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useAIMode } from "@/hooks/use-ai-mode";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 const Index = () => {
-  const { isAIMode, toggleAIMode } = useAIMode();
+  const { isAIMode, therapyMode } = useAIMode();
+  const { resetOnboarding } = useOnboarding();
   const { toast } = useToast();
 
-  const handleModeToggle = () => {
-    toggleAIMode();
-    toast({
-      title: isAIMode ? "Standard Mode Activated" : "AI Self-Therapy Mode Activated",
-      description: isAIMode 
-        ? "Switched to standard therapy mode with clinician support."
-        : "Switched to AI-guided self-therapy mode for mild to moderate concerns.",
-    });
+  const getModeDisplayName = () => {
+    switch (therapyMode) {
+      case 'ai': return 'AI Self-Therapy Mode';
+      case 'clinical': return 'Clinical Support Mode';
+      case 'corporate': return 'Corporate Wellness Mode';
+      default: return 'Standard Mode';
+    }
   };
 
   return (
@@ -51,11 +50,10 @@ const Index = () => {
         </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <Switch id="ai-mode" checked={isAIMode} onCheckedChange={handleModeToggle} />
-            <label htmlFor="ai-mode" className="text-sm flex items-center gap-1 cursor-pointer">
+            <span className="text-sm font-medium flex items-center gap-1">
               <Brain className="h-4 w-4 text-therapy-primary" />
-              AI Self-Therapy Mode
-            </label>
+              {getModeDisplayName()}
+            </span>
           </div>
           <TooltipProvider>
             <Tooltip>
@@ -66,7 +64,7 @@ const Index = () => {
               </TooltipTrigger>
               <TooltipContent side="bottom">
                 <p className="text-xs max-w-[250px]">
-                  Switch to AI Self-Therapy Mode for mild to moderate concerns. This mode provides automated guidance without clinician involvement.
+                  Your experience is personalized based on your onboarding questionnaire. To reset your mode, go to your profile settings.
                 </p>
               </TooltipContent>
             </Tooltip>
@@ -267,6 +265,28 @@ const Index = () => {
                   description="Nights with 7+ hours of sleep correlate with 23% lower anxiety levels the following day." 
                 />
               </div>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="text-sm font-medium mb-2">Not the right experience?</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    You can restart the onboarding process to recalibrate your experience.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      resetOnboarding();
+                      toast({
+                        title: "Onboarding Reset",
+                        description: "You'll be guided through the onboarding process again."
+                      });
+                    }}
+                  >
+                    Restart Onboarding
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </>
