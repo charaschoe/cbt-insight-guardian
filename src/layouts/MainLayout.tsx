@@ -60,7 +60,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         <main className="p-4 flex-1 overflow-auto">
           {children}
         </main>
-        <FloatingSOS />
       </div>
       
       {/* Onboarding Experience */}
