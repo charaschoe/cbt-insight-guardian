@@ -1,17 +1,20 @@
 
 import { Brain, LightbulbIcon, CircleCheckIcon, AlertCircleIcon } from "lucide-react";
 import { useAIMode } from "@/hooks/use-ai-mode";
+import { motion } from "framer-motion";
 
 interface OnboardingReasoningProps {
   reasoning: string;
   type?: "observation" | "analysis" | "conclusion" | "memory" | "default";
   showIcon?: boolean;
+  isLive?: boolean;
 }
 
 const OnboardingReasoning = ({ 
   reasoning, 
   type = "default", 
-  showIcon = true 
+  showIcon = true,
+  isLive = false
 }: OnboardingReasoningProps) => {
   const { therapyMode } = useAIMode();
   
@@ -46,11 +49,16 @@ const OnboardingReasoning = ({
   };
 
   return (
-    <div className={`border-t p-4 ${therapyMode === 'ai' ? 'bg-blue-50' : 
-                                    therapyMode === 'clinical' ? 'bg-green-50' : 
-                                    therapyMode === 'corporate' ? 'bg-purple-50' : 
-                                    therapyMode === 'relaxation' ? 'bg-amber-50' : 
-                                    'bg-muted/50'}`}>
+    <motion.div 
+      initial={isLive ? { opacity: 0, y: 10 } : {}}
+      animate={isLive ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.3 }}
+      className={`border-t p-4 ${therapyMode === 'ai' ? 'bg-blue-50' : 
+                                  therapyMode === 'clinical' ? 'bg-green-50' : 
+                                  therapyMode === 'corporate' ? 'bg-purple-50' : 
+                                  therapyMode === 'relaxation' ? 'bg-amber-50' : 
+                                  'bg-muted/50'}`}
+    >
       <div className="flex items-start gap-3">
         {showIcon && getIcon()}
         <div>
@@ -60,7 +68,7 @@ const OnboardingReasoning = ({
           </p>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

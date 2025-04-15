@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAIMode } from "@/hooks/use-ai-mode";
 import { useNavigate, useLocation } from "react-router-dom";
 import OnboardingReasoning from "@/components/onboarding/OnboardingReasoning";
+import { motion } from "framer-motion";
 
 type Message = {
   id: string;
@@ -35,6 +36,14 @@ type ThoughtProcess = {
 };
 
 type ChatMode = "text" | "voice";
+
+type MemoryItem = {
+  id: string;
+  content: string;
+  category: string;
+  date: Date;
+  importance: number;
+};
 
 const getTherapyModeClass = (mode: string) => {
   switch (mode) {
@@ -69,15 +78,27 @@ const Chat = () => {
   const [aiThinking, setAiThinking] = useState(false);
   const [showThoughtProcess, setShowThoughtProcess] = useState(true);
   const [thoughtProcessSteps, setThoughtProcessSteps] = useState<ThoughtProcess[]>([]);
+  const [liveThoughtProcess, setLiveThoughtProcess] = useState<ThoughtProcess[]>([]);
   const [transcript, setTranscript] = useState("");
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [permanentMemory, setPermanentMemory] = useState<string[]>([]);
+  const [permanentMemory, setPermanentMemory] = useState<MemoryItem[]>([
+    {
+      id: "initial-1",
+      content: "User seems to prefer voice interaction",
+      category: "preferences",
+      date: new Date(),
+      importance: 0.7
+    }
+  ]);
+  const [isMemoryUpdated, setIsMemoryUpdated] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { therapyMode } = useAIMode();
   const navigate = useNavigate();
   const location = useLocation();
+  const transcriptionTimeout = useRef<NodeJS.Timeout | null>(null);
+  const liveAnalysisTimeout = useRef<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -88,6 +109,110 @@ const Chat = () => {
     }
   }, [location, navigate]);
 
+  useEffect(() => {
+    // Add CSS for the orb animation
+    const style = document.createElement('style');
+    style.textContent = `
+      .voice-orb {
+        position: relative;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        transition: all 0.5s ease;
+      }
+      
+      .orb-standard {
+        background: radial-gradient(circle at center, #4c7eff, #2952cc);
+        box-shadow: 0 0 30px rgba(76, 126, 255, 0.5);
+      }
+      
+      .orb-clinical {
+        background: radial-gradient(circle at center, #42d392, #1ea666);
+        box-shadow: 0 0 30px rgba(66, 211, 146, 0.5);
+      }
+      
+      .orb-corporate {
+        background: radial-gradient(circle at center, #9a66ff, #7133e2);
+        box-shadow: 0 0 30px rgba(154, 102, 255, 0.5);
+      }
+      
+      .orb-relaxation {
+        background: radial-gradient(circle at center, #ffb561, #e68a19);
+        box-shadow: 0 0 30px rgba(255, 181, 97, 0.5);
+      }
+      
+      .orb-pulse {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 50%;
+      }
+      
+      .orb-inner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+        z-index: 2;
+      }
+      
+      .listening .orb-pulse {
+        animation: pulse 2s infinite;
+      }
+      
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+        }
+        70% {
+          box-shadow: 0 0 0 50px rgba(255, 255, 255, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+        }
+      }
+      
+      .live-transcript {
+        position: relative;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+      
+      .ai-reasoning-container {
+        position: relative;
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 12px;
+        padding: 12px;
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        backdrop-filter: blur(8px);
+        height: 200px;
+        overflow-y: auto;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -95,6 +220,166 @@ const Chat = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, thoughtProcessSteps]);
+
+  const extractEntities = (message: string) => {
+    const entities = {
+      people: [] as string[],
+      dates: [] as string[],
+      events: [] as string[],
+      feelings: [] as string[],
+      locations: [] as string[]
+    };
+    
+    // Extract people (simple heuristic for capitalized names)
+    const nameRegex = /\b[A-Z][a-z]+\b/g;
+    const possibleNames = message.match(nameRegex) || [];
+    const commonWords = ["I", "The", "A", "An", "In", "On", "At", "With", "And", "But", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    entities.people = possibleNames.filter(name => !commonWords.includes(name));
+    
+    // Extract dates
+    const dateRegex = /\b(next|this) (Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\b|tomorrow|yesterday|today|\b\d{1,2}(st|nd|rd|th)?\s+(of\s+)?(January|February|March|April|May|June|July|August|September|October|November|December)\b/gi;
+    entities.dates = message.match(dateRegex) || [];
+    
+    // Extract potential events
+    const eventRegex = /\b(meeting|presentation|assignment|project|deadline|appointment|session|interview|exam|test)\b/gi;
+    entities.events = message.match(eventRegex) || [];
+    
+    // Extract feelings
+    const feelingRegex = /\b(stress|anxious|worried|nervous|excited|happy|sad|angry|frustrated|overwhelmed|tired|exhausted)\b/gi;
+    entities.feelings = message.match(feelingRegex) || [];
+    
+    // Extract locations
+    const locationRegex = /\b(at|in)\s+(work|home|school|office|university|college)\b/gi;
+    const locMatches = [...message.matchAll(locationRegex)];
+    entities.locations = locMatches.map(match => match[2]);
+    
+    return entities;
+  };
+
+  const shouldAddToMemory = (entity: string, category: string): boolean => {
+    // Check if entity is already in memory
+    return !permanentMemory.some(
+      item => item.content.toLowerCase().includes(entity.toLowerCase()) && 
+              item.category === category
+    );
+  };
+
+  const updateMemoryWithEntities = (message: string) => {
+    const entities = extractEntities(message);
+    const newMemoryItems: MemoryItem[] = [];
+    
+    // Add people to memory
+    entities.people.forEach(person => {
+      if (shouldAddToMemory(person, "people")) {
+        newMemoryItems.push({
+          id: Date.now() + Math.random().toString(),
+          content: `User mentioned person: ${person}`,
+          category: "people",
+          date: new Date(),
+          importance: 0.8
+        });
+      }
+    });
+    
+    // Add dates and events together for context
+    if (entities.dates.length > 0 && entities.events.length > 0) {
+      const date = entities.dates[0];
+      const event = entities.events[0];
+      newMemoryItems.push({
+        id: Date.now() + Math.random().toString(),
+        content: `User has ${event} on ${date}`,
+        category: "schedule",
+        date: new Date(),
+        importance: 0.9
+      });
+    }
+    
+    // Add feelings
+    entities.feelings.forEach(feeling => {
+      newMemoryItems.push({
+        id: Date.now() + Math.random().toString(),
+        content: `User expressed feeling ${feeling}`,
+        category: "emotions",
+        date: new Date(),
+        importance: 0.7
+      });
+    });
+    
+    if (newMemoryItems.length > 0) {
+      setPermanentMemory(prev => [...prev, ...newMemoryItems]);
+      setIsMemoryUpdated(true);
+      setTimeout(() => setIsMemoryUpdated(false), 3000);
+      
+      // Add memory entries to thought process
+      newMemoryItems.forEach(item => {
+        setLiveThoughtProcess(prev => [
+          ...prev,
+          {
+            id: Date.now() + Math.random().toString(),
+            type: "memory",
+            content: `Adding to memory: ${item.content}`
+          }
+        ]);
+      });
+    }
+  };
+
+  const analyzeLiveTranscript = (text: string) => {
+    if (!text || text.length < 5) return;
+    
+    // Clear existing timeout to prevent rapid updates
+    if (liveAnalysisTimeout.current) {
+      clearTimeout(liveAnalysisTimeout.current);
+    }
+    
+    liveAnalysisTimeout.current = setTimeout(() => {
+      // Generate live thought process as user is speaking
+      const entities = extractEntities(text);
+      const liveThoughts: ThoughtProcess[] = [];
+      
+      // Add observation based on the transcript so far
+      if (text.length > 10) {
+        liveThoughts.push({
+          id: Date.now().toString(),
+          type: "observation",
+          content: `Live transcript analysis: User is discussing ${
+            entities.people.length > 0 ? `person named ${entities.people[0]}` : 
+            entities.events.length > 0 ? `an ${entities.events[0]}` : 
+            entities.feelings.length > 0 ? `feelings of ${entities.feelings[0]}` : 
+            "a topic I'm analyzing"
+          }`
+        });
+      }
+      
+      // Add analysis if we detect important entities
+      if (entities.people.length > 0 && entities.events.length > 0) {
+        liveThoughts.push({
+          id: (Date.now() + 1).toString(),
+          type: "analysis",
+          content: `User mentions ${entities.people[0]} in relation to ${entities.events[0]}${
+            entities.dates.length > 0 ? ` scheduled for ${entities.dates[0]}` : ""
+          }. This appears to be a significant upcoming event.`
+        });
+      } else if (entities.feelings.length > 0) {
+        liveThoughts.push({
+          id: (Date.now() + 1).toString(),
+          type: "analysis",
+          content: `User is expressing ${entities.feelings[0]} feelings${
+            entities.events.length > 0 ? ` about ${entities.events[0]}` : ""
+          }. This may indicate their current emotional state.`
+        });
+      }
+      
+      // Only update if we have new thoughts to add
+      if (liveThoughts.length > 0) {
+        setLiveThoughtProcess(liveThoughts);
+      }
+      
+      // Add to permanent memory if we have substantial information
+      updateMemoryWithEntities(text);
+      
+    }, 500); // Debounce live analysis to avoid excessive updates
+  };
 
   const shouldEscalateToTherapist = (message: string): boolean => {
     const emergencyKeywords = [
@@ -153,23 +438,31 @@ const Chat = () => {
         category === "work" ? "performance anxiety or imposter syndrome" : "unclear thought patterns"
       }. Checking for cognitive distortions...`
     });
-
-    // Add to permanent memory if this is a significant insight
-    if (category !== "general" && Math.random() > 0.5) {
-      const memoryItem = `User has expressed ${category}-related concerns on ${new Date().toLocaleDateString()}`;
-      if (!permanentMemory.includes(memoryItem)) {
-        setPermanentMemory(prev => [...prev, memoryItem]);
-        
-        thoughts.push({
-          id: (Date.now() + 3).toString(),
-          type: "memory",
-          content: `Adding to permanent memory: ${memoryItem}`
-        });
-      }
+    
+    // Process entities and add relevant thoughts
+    const entities = extractEntities(userMessage);
+    
+    if (entities.people.length > 0) {
+      thoughts.push({
+        id: (Date.now() + 2).toString(),
+        type: "analysis",
+        content: `User mentioned person: ${entities.people.join(", ")}. This person appears to be significant in the current context.`
+      });
     }
     
+    if (entities.dates.length > 0 && entities.events.length > 0) {
+      thoughts.push({
+        id: (Date.now() + 3).toString(),
+        type: "analysis",
+        content: `User mentioned event: ${entities.events[0]} on ${entities.dates[0]}. This is likely causing time-based pressure.`
+      });
+    }
+
+    // Add to permanent memory if this is a significant insight
+    updateMemoryWithEntities(userMessage);
+    
     thoughts.push({
-      id: (Date.now() + 2).toString(),
+      id: (Date.now() + 4).toString(),
       type: "conclusion",
       content: `This conversation will be approached with ${
         therapyMode === 'ai' ? 'balanced AI techniques combining CBT and mindfulness' :
@@ -181,6 +474,47 @@ const Chat = () => {
     });
     
     return thoughts;
+  };
+
+  const findRelevantMemoryItems = (message: string): MemoryItem[] => {
+    const entities = extractEntities(message);
+    const relevantItems: MemoryItem[] = [];
+    
+    // Look for relevant memory items based on people mentioned
+    if (entities.people.length > 0) {
+      permanentMemory.forEach(item => {
+        entities.people.forEach(person => {
+          if (item.content.toLowerCase().includes(person.toLowerCase())) {
+            relevantItems.push(item);
+          }
+        });
+      });
+    }
+    
+    // Look for relevant memory items based on events mentioned
+    if (entities.events.length > 0) {
+      permanentMemory.forEach(item => {
+        entities.events.forEach(event => {
+          if (item.content.toLowerCase().includes(event.toLowerCase())) {
+            relevantItems.push(item);
+          }
+        });
+      });
+    }
+    
+    // Look for relevant memory items based on feelings mentioned
+    if (entities.feelings.length > 0) {
+      permanentMemory.forEach(item => {
+        if (item.category === "emotions") {
+          relevantItems.push(item);
+        }
+      });
+    }
+    
+    // Deduplicate items
+    return Array.from(new Set(relevantItems.map(item => item.id)))
+      .map(id => relevantItems.find(item => item.id === id))
+      .filter(Boolean) as MemoryItem[];
   };
 
   const handleSendMessage = () => {
@@ -199,11 +533,12 @@ const Chat = () => {
     setNewMessage("");
     setTranscript("");
     setAiThinking(true);
+    setLiveThoughtProcess([]);
     
     setTimeout(() => {
       const thoughts = generateThoughtProcess(messageContent);
       setThoughtProcessSteps(thoughts);
-    }, 500);
+    }, 300);
     
     const needsEscalation = shouldEscalateToTherapist(messageContent);
     
@@ -233,19 +568,50 @@ const Chat = () => {
           }, 1500);
         }, 2000);
       } else {
-        // Generate AI response based on therapy mode and user message
+        // Generate AI response based on therapy mode, user message and memory
         let aiResponse = "";
         const category = determineCategory(messageContent);
+        const relevantMemory = findRelevantMemoryItems(messageContent);
         
-        if (therapyMode === 'clinical') {
-          aiResponse = `From a clinical perspective, ${category} concerns often benefit from structured approaches. Can you tell me more about when these feelings first began and how they've evolved over time?`;
+        // Find if we have any memory about Sarah
+        const sarahMemory = permanentMemory.find(item => 
+          item.content.toLowerCase().includes("sarah")
+        );
+        
+        // Find if we have any memory about assignment or presentation
+        const assignmentMemory = permanentMemory.find(item => 
+          item.content.toLowerCase().includes("assignment") || 
+          item.content.toLowerCase().includes("presentation")
+        );
+        
+        // Customize response based on detected entities and memory
+        if (messageContent.toLowerCase().includes("sarah") && messageContent.toLowerCase().includes("stress")) {
+          aiResponse = `I understand Sarah at work has been causing you stress. ${assignmentMemory ? 
+            "And this is connected to your upcoming presentation, correct? How much of the presentation have you completed so far?" : 
+            "Can you tell me more about how Sarah's behavior is affecting your work?"}`;
+        } else if (messageContent.toLowerCase().includes("presentation") || messageContent.toLowerCase().includes("assignment")) {
+          aiResponse = `Regarding your upcoming assignment due on Monday, how much progress have you made? What specific aspects are feeling most challenging right now?`;
+        } else if (therapyMode === 'clinical') {
+          aiResponse = `From a clinical perspective, ${category} concerns often benefit from structured approaches. ${
+            relevantMemory.length > 0 ? `I notice you've mentioned ${relevantMemory[0].content.split(":")[1]} before. How is that situation evolving?` : 
+            "Can you tell me more about when these feelings first began and how they've evolved over time?"
+          }`;
         } else if (therapyMode === 'corporate') {
-          aiResponse = `In workplace contexts, ${category} can impact professional performance. Let's explore some strategies that might help you maintain balance while achieving your career goals.`;
+          aiResponse = `In workplace contexts, ${category} can impact professional performance. ${
+            relevantMemory.length > 0 ? `I recall you mentioned ${relevantMemory[0].content.split(":")[1]}. How is that affecting your work environment now?` : 
+            "Let's explore some strategies that might help you maintain balance while achieving your career goals."
+          }`;
         } else if (therapyMode === 'relaxation') {
-          aiResponse = `Let's focus on easing your ${category} with some relaxation techniques. First, could we try a brief breathing exercise to center ourselves before exploring this further?`;
+          aiResponse = `Let's focus on easing your ${category} with some relaxation techniques. ${
+            relevantMemory.length > 0 ? `I remember you mentioned ${relevantMemory[0].content.split(":")[1]}. How are you feeling about that now?` : 
+            "First, could we try a brief breathing exercise to center ourselves before exploring this further?"
+          }`;
         } else {
           // Standard/AI mode
-          aiResponse = `I notice you mentioned something related to ${category}. How long have you been experiencing these feelings, and what tends to trigger them?`;
+          aiResponse = `I notice you mentioned something related to ${category}. ${
+            relevantMemory.length > 0 ? `Based on our previous conversations about ${relevantMemory[0].content.split(":")[1]}, how are you coping with this situation now?` : 
+            "How long have you been experiencing these feelings, and what tends to trigger them?"
+          }`;
         }
         
         const aiMessage: Message = {
@@ -262,7 +628,7 @@ const Chat = () => {
           speakMessage(aiResponse);
         }
       }
-    }, 3000);
+    }, 2000);
   };
 
   const handleToggleMic = () => {
@@ -271,35 +637,81 @@ const Chat = () => {
         .then(() => {
           setIsRecording(true);
           setIsTranscribing(true);
+          setLiveThoughtProcess([]);
           
           // Simulate live transcription
-          const phrases = [
-            "I've been ",
-            "I've been feeling ",
-            "I've been feeling really ",
-            "I've been feeling really anxious ",
-            "I've been feeling really anxious about ",
-            "I've been feeling really anxious about an ",
-            "I've been feeling really anxious about an upcoming ",
-            "I've been feeling really anxious about an upcoming presentation ",
-            "I've been feeling really anxious about an upcoming presentation at ",
-            "I've been feeling really anxious about an upcoming presentation at work.",
-          ];
+          let phrases: string[] = [];
+          
+          // Detect if we've already set up memory about Sarah and the assignment
+          const hasSarahMemory = permanentMemory.some(item => 
+            item.content.toLowerCase().includes("sarah")
+          );
+          
+          const hasAssignmentMemory = permanentMemory.some(item => 
+            item.content.toLowerCase().includes("assignment") || 
+            item.content.toLowerCase().includes("presentation")
+          );
+          
+          if (!hasSarahMemory && !hasAssignmentMemory) {
+            // First-time conversation about Sarah and the assignment
+            phrases = [
+              "Sarah has been ",
+              "Sarah has been really ",
+              "Sarah has been really stressing me out ",
+              "Sarah has been really stressing me out at ",
+              "Sarah has been really stressing me out at work ",
+              "Sarah has been really stressing me out at work with ",
+              "Sarah has been really stressing me out at work with the ",
+              "Sarah has been really stressing me out at work with the upcoming ",
+              "Sarah has been really stressing me out at work with the upcoming assignment ",
+              "Sarah has been really stressing me out at work with the upcoming assignment that is due ",
+              "Sarah has been really stressing me out at work with the upcoming assignment that is due next ",
+              "Sarah has been really stressing me out at work with the upcoming assignment that is due next Monday.",
+            ];
+          } else {
+            // Follow-up conversation about the assignment progress
+            phrases = [
+              "I've only ",
+              "I've only finished ",
+              "I've only finished about ",
+              "I've only finished about half ",
+              "I've only finished about half of ",
+              "I've only finished about half of the ",
+              "I've only finished about half of the presentation ",
+              "I've only finished about half of the presentation and ",
+              "I've only finished about half of the presentation and I'm ",
+              "I've only finished about half of the presentation and I'm worried ",
+              "I've only finished about half of the presentation and I'm worried I ",
+              "I've only finished about half of the presentation and I'm worried I won't ",
+              "I've only finished about half of the presentation and I'm worried I won't finish ",
+              "I've only finished about half of the presentation and I'm worried I won't finish in ",
+              "I've only finished about half of the presentation and I'm worried I won't finish in time.",
+            ];
+          }
           
           let i = 0;
           const transcriptionInterval = setInterval(() => {
             if (i < phrases.length) {
               setTranscript(phrases[i]);
+              // Analyze the transcript as it grows
+              analyzeLiveTranscript(phrases[i]);
               i++;
             } else {
               clearInterval(transcriptionInterval);
-              setIsRecording(false);
-              setIsTranscribing(false);
               
-              // Auto-send after brief pause
-              setTimeout(() => {
-                handleSendMessage();
-              }, 1000);
+              if (transcriptionTimeout.current) {
+                clearTimeout(transcriptionTimeout.current);
+              }
+              
+              transcriptionTimeout.current = setTimeout(() => {
+                setIsRecording(false);
+                setIsTranscribing(false);
+                
+                // Auto-send after brief pause
+                setTimeout(() => {
+                  handleSendMessage();
+                }, 500);
+              }, 500);
             }
           }, 300);
           
@@ -315,6 +727,10 @@ const Chat = () => {
     } else {
       setIsRecording(false);
       setIsTranscribing(false);
+      
+      if (transcriptionTimeout.current) {
+        clearTimeout(transcriptionTimeout.current);
+      }
     }
   };
 
@@ -322,7 +738,15 @@ const Chat = () => {
     if ('speechSynthesis' in window) {
       setIsSpeaking(true);
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.onend = () => setIsSpeaking(false);
+      utterance.onend = () => {
+        setIsSpeaking(false);
+        // Automatically start listening for response after AI finishes speaking
+        if (chatMode === 'voice') {
+          setTimeout(() => {
+            handleToggleMic();
+          }, 500);
+        }
+      };
       speechSynthesis.speak(utterance);
     } else {
       toast({
@@ -574,7 +998,11 @@ const Chat = () => {
         <div className="flex flex-col items-center justify-center">
           <div className="relative w-full max-w-4xl rounded-2xl bg-white/50 backdrop-blur-sm shadow-lg p-6 pb-24 mx-auto flex flex-col items-center">
             {/* Centered Orb */}
-            <div className="mt-16 mb-8">
+            <motion.div
+              animate={isRecording ? { scale: [1, 1.05, 1] } : {}}
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="mt-16 mb-8"
+            >
               <div className={`voice-orb ${getTherapyModeClass(therapyMode)} ${isRecording ? 'listening' : ''}`}>
                 <div className="orb-pulse"></div>
                 <div className="orb-inner flex items-center justify-center">
@@ -587,7 +1015,7 @@ const Chat = () => {
                   )}
                 </div>
               </div>
-            </div>
+            </motion.div>
             
             {/* Voice controls */}
             <div className="flex gap-4 mt-4">
@@ -621,27 +1049,45 @@ const Chat = () => {
             
             {/* Live transcript */}
             {(isTranscribing || transcript) && (
-              <div className="mt-8 live-transcript">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="mt-8 live-transcript"
+              >
                 <p className="text-sm">{transcript || "Listening..."}</p>
+              </motion.div>
+            )}
+            
+            {/* AI reasoning for live transcript */}
+            {showThoughtProcess && liveThoughtProcess.length > 0 && isTranscribing && (
+              <div className="ai-reasoning-container mt-4">
+                <ScrollArea className="h-full pr-4">
+                  <div className="space-y-2">
+                    {liveThoughtProcess.map((step) => (
+                      <OnboardingReasoning
+                        key={step.id}
+                        reasoning={step.content}
+                        type={step.type}
+                        isLive={true}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             )}
             
-            {/* AI reasoning */}
-            {showThoughtProcess && thoughtProcessSteps.length > 0 && (
+            {/* AI reasoning for completed analysis */}
+            {showThoughtProcess && thoughtProcessSteps.length > 0 && !isTranscribing && (
               <div className="ai-reasoning-container mt-4">
                 <ScrollArea className="h-full pr-4">
                   <div className="space-y-2">
                     {thoughtProcessSteps.map((step) => (
-                      <div key={step.id} className="mb-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          {step.type === "observation" && <AlertCircle className="h-4 w-4 text-blue-500" />}
-                          {step.type === "analysis" && <Brain className="h-4 w-4 text-therapy-primary" />}
-                          {step.type === "conclusion" && <CheckCircle className="h-4 w-4 text-green-500" />}
-                          {step.type === "memory" && <Lightbulb className="h-4 w-4 text-amber-500" />}
-                          <h4 className="text-xs font-medium capitalize">{step.type}</h4>
-                        </div>
-                        <p className="text-xs text-gray-700 pl-6">{step.content}</p>
-                      </div>
+                      <OnboardingReasoning
+                        key={step.id}
+                        reasoning={step.content}
+                        type={step.type}
+                      />
                     ))}
                   </div>
                 </ScrollArea>
@@ -650,26 +1096,30 @@ const Chat = () => {
             
             {/* Memory display */}
             {permanentMemory.length > 0 && showThoughtProcess && (
-              <div className={`mt-4 p-3 rounded-lg text-xs shadow-sm border ${
-                therapyMode === 'ai' ? 'bg-blue-50 border-blue-100' : 
-                therapyMode === 'clinical' ? 'bg-green-50 border-green-100' : 
-                therapyMode === 'corporate' ? 'bg-purple-50 border-purple-100' : 
-                therapyMode === 'relaxation' ? 'bg-amber-50 border-amber-100' : 
-                'bg-therapy-light border-therapy-muted'
-              }`}>
+              <motion.div 
+                initial={isMemoryUpdated ? { scale: 1.05, borderColor: "#fbbf24" } : {}}
+                animate={isMemoryUpdated ? { scale: 1, borderColor: "" } : {}}
+                transition={{ duration: 0.5 }}
+                className={`mt-4 p-3 rounded-lg text-xs shadow-sm border ${
+                  therapyMode === 'ai' ? 'bg-blue-50 border-blue-100' : 
+                  therapyMode === 'clinical' ? 'bg-green-50 border-green-100' : 
+                  therapyMode === 'corporate' ? 'bg-purple-50 border-purple-100' : 
+                  therapyMode === 'relaxation' ? 'bg-amber-50 border-amber-100' : 
+                  'bg-therapy-light border-therapy-muted'
+                }`}>
                 <div className="flex items-center gap-1 mb-1">
                   <Lightbulb className="h-3 w-3" />
                   <span className="font-medium">Permanent Memory</span>
                 </div>
                 <ul className="list-disc pl-5 space-y-1">
                   {permanentMemory.slice(-3).map((item, i) => (
-                    <li key={i}>{item}</li>
+                    <li key={i}>{item.content}</li>
                   ))}
                   {permanentMemory.length > 3 && (
                     <li className="text-muted-foreground">+ {permanentMemory.length - 3} more items</li>
                   )}
                 </ul>
-              </div>
+              </motion.div>
             )}
           </div>
           
