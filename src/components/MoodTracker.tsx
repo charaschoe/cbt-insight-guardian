@@ -1,7 +1,9 @@
 
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { HeartHandshake, CalendarDays } from "lucide-react";
 
 const moodOptions = [
   { emoji: "😢", label: "Very Sad", color: "bg-blue-200", value: 1 },
@@ -32,62 +34,76 @@ const MoodTracker = ({ className }: MoodTrackerProps) => {
   }));
 
   return (
-    <Card className={cn("p-5", className)}>
-      <h3 className="text-lg font-medium mb-4">How are you feeling today?</h3>
-      
-      <div className="flex justify-between mb-6">
-        {moodOptions.map((mood) => (
-          <div 
-            key={mood.value}
-            className={cn(
-              "mood-circle",
-              mood.color,
-              selectedMood === mood.value && "selected"
-            )}
-            onClick={() => setSelectedMood(mood.value)}
-          >
-            <span className="text-xl">{mood.emoji}</span>
-          </div>
-        ))}
-      </div>
-      
-      {selectedMood && (
-        <div className="mb-4 animate-fade-in">
-          <label className="block text-sm font-medium mb-1">Add a note about your mood</label>
-          <textarea 
-            className="w-full p-2 border rounded-md text-sm" 
-            rows={2}
-            placeholder="What's on your mind?"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
-        </div>
-      )}
-      
-      <div className="mt-6">
-        <h4 className="text-sm font-medium mb-2">This week</h4>
-        <div className="mood-tracker-grid">
-          {weekData.map((day, index) => (
+    <Card className={cn("", className)}>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <HeartHandshake className="h-5 w-5 text-therapy-primary" />
+          Daily Check-in
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <h3 className="text-base font-medium">How are you feeling today?</h3>
+        
+        <div className="flex justify-between gap-2 mb-4">
+          {moodOptions.map((mood) => (
             <div 
-              key={index} 
+              key={mood.value}
               className={cn(
-                "day-cell",
-                day.isToday && "ring-1 ring-therapy-primary",
-                !day.hasMood && "opacity-50"
+                "flex flex-col items-center justify-center p-3 rounded-lg cursor-pointer transition-all hover:scale-105",
+                mood.color,
+                selectedMood === mood.value && "ring-2 ring-therapy-primary"
               )}
+              onClick={() => setSelectedMood(mood.value)}
             >
-              <div className="flex flex-col items-center">
+              <span className="text-2xl mb-1">{mood.emoji}</span>
+              <span className="text-xs font-medium">{mood.label}</span>
+            </div>
+          ))}
+        </div>
+        
+        {selectedMood && (
+          <div className="animate-fade-in space-y-3">
+            <label className="block text-sm font-medium">Add a note about your mood</label>
+            <textarea 
+              className="w-full p-3 border rounded-md text-sm" 
+              rows={2}
+              placeholder="What's on your mind today?"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+            />
+            <Button className="w-full">Save Check-in</Button>
+          </div>
+        )}
+        
+        <div className="pt-4 border-t">
+          <div className="flex items-center justify-between mb-3">
+            <h4 className="text-sm font-medium flex items-center gap-1">
+              <CalendarDays className="h-4 w-4" /> 
+              This week
+            </h4>
+            <Button variant="ghost" size="sm" className="text-xs">View History</Button>
+          </div>
+          <div className="grid grid-cols-7 gap-2">
+            {weekData.map((day, index) => (
+              <div 
+                key={index} 
+                className={cn(
+                  "flex flex-col items-center justify-center p-2 rounded-md",
+                  day.isToday && "ring-1 ring-therapy-primary bg-therapy-light/30",
+                  !day.hasMood && "opacity-60"
+                )}
+              >
                 <span className="text-xs font-medium">{day.day}</span>
                 {day.hasMood && day.mood && (
-                  <span className="text-xs mt-1">
+                  <span className="text-lg mt-1">
                     {moodOptions[day.mood - 1].emoji}
                   </span>
                 )}
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
 };

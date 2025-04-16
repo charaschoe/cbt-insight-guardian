@@ -5,7 +5,6 @@ import Sidebar from "@/components/Sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
 import OnboardingExperience from "@/components/onboarding/OnboardingExperience";
 import { useOnboarding } from "@/hooks/use-onboarding";
-import { useNavigate } from "react-router-dom";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -15,7 +14,6 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
   const { isOnboardingActive } = useOnboarding();
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Adjust sidebar based on screen size
@@ -36,11 +34,11 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen flex w-full overflow-hidden">
+    <div className="min-h-screen flex w-full overflow-hidden bg-gray-50/30">
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'} h-screen overflow-auto`}>
         <NavBar toggleSidebar={toggleSidebar} />
-        <main className="p-6 flex-1 overflow-auto">
+        <main className="p-4 md:p-6 flex-1 overflow-auto max-w-7xl mx-auto w-full">
           {children}
         </main>
       </div>

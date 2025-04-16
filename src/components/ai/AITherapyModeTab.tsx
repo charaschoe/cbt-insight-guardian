@@ -39,7 +39,7 @@ const AITherapyModeTab = ({ className }: AITherapyModeTabProps) => {
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-sm font-medium">CBT Session</h3>
-                  <Badge variant="outline" size="sm">25 min</Badge>
+                  <Badge variant="outline" className="text-xs">25 min</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">
                   Cognitive behavioral therapy focused on challenging negative thought patterns.
@@ -57,7 +57,7 @@ const AITherapyModeTab = ({ className }: AITherapyModeTabProps) => {
               <CardContent className="p-4">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-sm font-medium">Guided Meditation</h3>
-                  <Badge variant="outline" size="sm">15 min</Badge>
+                  <Badge variant="outline" className="text-xs">15 min</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">
                   Mindfulness meditation to reduce stress and increase present-moment awareness.
