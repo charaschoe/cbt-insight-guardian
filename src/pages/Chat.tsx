@@ -92,6 +92,7 @@ const Chat = () => {
     }
   ]);
   const [isMemoryUpdated, setIsMemoryUpdated] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLTextAreaElement>(null);
@@ -682,6 +683,7 @@ const Chat = () => {
     setTranscript("");
     setAiThinking(true);
     setLiveThoughtProcess([]);
+    setIsSending(true);
     
     setTimeout(() => {
       const thoughts = generateThoughtProcess(messageContent);
@@ -692,6 +694,7 @@ const Chat = () => {
     
     setTimeout(() => {
       setAiThinking(false);
+      setIsSending(false);
       
       if (needsEscalation) {
         const escalationMessage: Message = {
