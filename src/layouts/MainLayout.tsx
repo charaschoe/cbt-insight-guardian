@@ -13,7 +13,7 @@ interface MainLayoutProps {
 const MainLayout = ({ children }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const { isOnboardingActive } = useOnboarding();
+  const { isOnboardingActive, isFirstVisit } = useOnboarding();
 
   useEffect(() => {
     // Adjust sidebar based on screen size
@@ -43,7 +43,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         </main>
       </div>
       
-      {/* Onboarding Experience */}
+      {/* Onboarding Experience - ensure it shows on first visit */}
       {isOnboardingActive && <OnboardingExperience />}
     </div>
   );

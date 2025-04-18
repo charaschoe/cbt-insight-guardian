@@ -1,5 +1,5 @@
 
-import { Brain, LightbulbIcon, CircleCheckIcon, AlertCircleIcon } from "lucide-react";
+import { Brain, LightbulbIcon, CircleCheckIcon, AlertCircleIcon, Sparkles } from "lucide-react";
 import { useAIMode } from "@/hooks/use-ai-mode";
 import { motion } from "framer-motion";
 
@@ -29,7 +29,7 @@ const OnboardingReasoning = ({
       case "memory":
         return <LightbulbIcon className="h-5 w-5 text-therapy-primary mt-0.5" />;
       default:
-        return <Brain className="h-5 w-5 text-therapy-primary mt-0.5" />;
+        return <Sparkles className="h-5 w-5 text-therapy-primary mt-0.5" />;
     }
   };
 
@@ -44,7 +44,7 @@ const OnboardingReasoning = ({
       case "memory":
         return "Added to Memory";
       default:
-        return "AI Reasoning Process";
+        return "Personalized Insight";
     }
   };
 

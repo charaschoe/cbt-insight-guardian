@@ -27,6 +27,7 @@ export interface ProfileData {
   primaryConcerns?: string[];
   severityLevel?: 'mild' | 'moderate' | 'severe';
   hasPreviousTherapy?: boolean;
+  previousTherapyDetails?: string;
   hasActiveSuicidalIdeation?: boolean;
   preferredApproach?: string;
   goals?: string[];
@@ -80,7 +81,7 @@ const onboardingQuestions: OnboardingQuestion[] = [
     type: 'text',
     nextQuestionId: 'primary_concern',
     category: 'background',
-    reasoning: 'Personalizing the experience with the user\'s name creates a more engaging and tailored experience.'
+    reasoning: 'Personalizing the experience with your name creates a more engaging and tailored experience, helping us address you properly throughout your journey.'
   },
   {
     id: 'primary_concern',
@@ -97,7 +98,7 @@ const onboardingQuestions: OnboardingQuestion[] = [
     ],
     nextQuestionId: 'severity',
     category: 'clinical',
-    reasoning: 'Understanding the primary concerns helps determine whether the user needs clinical support or could benefit from self-guided AI therapy.'
+    reasoning: 'Understanding your primary concerns helps us determine whether you need clinical support or could benefit from self-guided AI therapy.'
   },
   {
     id: 'severity',
@@ -105,20 +106,23 @@ const onboardingQuestions: OnboardingQuestion[] = [
     type: 'scale',
     nextQuestionId: 'previous_therapy',
     category: 'severity',
-    reasoning: 'Assessing severity helps determine the appropriate level of support, with higher severity often indicating a need for clinical oversight.'
+    reasoning: 'Assessing the severity of your concerns helps us determine the appropriate level of support, with higher severity often indicating a need for clinical oversight.'
   },
   {
     id: 'previous_therapy',
-    text: 'Have you ever worked with a therapist or mental health professional before?',
+    text: 'Could you tell us about your experience with therapy or mental health support?',
     type: 'singleChoice',
     options: [
-      { id: 'yes_current', text: 'Yes, currently', value: 'yes_current' },
-      { id: 'yes_past', text: 'Yes, in the past', value: 'yes_past' },
-      { id: 'no', text: 'No, never', value: 'no' }
+      { id: 'yes_current', text: 'I\'m currently working with a therapist/counselor', value: 'yes_current' },
+      { id: 'yes_recent', text: 'I\'ve seen a therapist/counselor within the last year', value: 'yes_recent' },
+      { id: 'yes_past', text: 'I\'ve had therapy/counseling in the past (over a year ago)', value: 'yes_past' },
+      { id: 'yes_informal', text: 'I\'ve used informal support like coaching or support groups', value: 'yes_informal' },
+      { id: 'yes_apps', text: 'I\'ve used other mental health apps or online resources', value: 'yes_apps' },
+      { id: 'no', text: 'I have no previous experience with therapy or mental health support', value: 'no' }
     ],
     nextQuestionId: 'crisis_assessment',
     category: 'background',
-    reasoning: 'Previous therapy experience helps gauge familiarity with therapeutic concepts and potentially indicates clinical complexity.'
+    reasoning: 'Your therapy history helps us understand your familiarity with therapeutic concepts and ensures we provide appropriate support alongside any existing care you\'re receiving.'
   },
   {
     id: 'crisis_assessment',
@@ -413,9 +417,14 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
       navigate('/emergency');
     } else if (questionId === 'complete' && value === 'start') {
       completeOnboarding();
+    } else if (questionId === 'previous_therapy') {
+      // Don't automatically advance for enhanced questions that need review
+      return;
     } else {
-      // Normal case: go to next question
-      goToNextQuestion();
+      // Normal case: go to next question for single choice questions
+      if (onboardingQuestions[currentQuestionIndex].type === 'singleChoice') {
+        goToNextQuestion();
+      }
     }
   };
   
@@ -436,9 +445,11 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
         setProfileData(prev => ({ ...prev, severityLevel }));
         break;
       case 'previous_therapy':
+        const hasTherapy = value !== 'no';
         setProfileData(prev => ({ 
           ...prev, 
-          hasPreviousTherapy: value === 'yes_current' || value === 'yes_past'
+          hasPreviousTherapy: hasTherapy,
+          previousTherapyDetails: value
         }));
         break;
       case 'approach_preference':
@@ -464,7 +475,8 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
     const clinicalIndicators = [
       profileData.hasActiveSuicidalIdeation,
       profileData.severityLevel === 'severe',
-      answers.some(a => a.questionId === 'context' && a.value === 'clinical')
+      answers.some(a => a.questionId === 'context' && a.value === 'clinical'),
+      profileData.previousTherapyDetails === 'yes_current'
     ];
     
     // Corporate indicators
