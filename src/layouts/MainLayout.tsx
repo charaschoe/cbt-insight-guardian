@@ -13,10 +13,9 @@ interface MainLayoutProps {
 const MainLayout = ({ children }: MainLayoutProps) => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
-  const { isOnboardingActive, isFirstVisit } = useOnboarding();
+  const { isOnboardingActive } = useOnboarding();
 
   useEffect(() => {
-    // Adjust sidebar based on screen size
     const handleResize = () => {
       if (window.innerWidth < 768) {
         setSidebarOpen(false);
@@ -38,13 +37,18 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'} h-screen overflow-auto`}>
         <NavBar toggleSidebar={toggleSidebar} />
-        <main className="p-4 md:p-6 flex-1 overflow-auto max-w-7xl mx-auto w-full">
+        <main className="p-4 md:p-6 flex-1 overflow-auto w-full max-w-5xl mx-auto">
           {children}
         </main>
       </div>
       
-      {/* Onboarding Experience - ensure it shows on first visit */}
-      {isOnboardingActive && <OnboardingExperience />}
+      {isOnboardingActive && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="w-full max-w-2xl mx-auto p-4">
+            <OnboardingExperience />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

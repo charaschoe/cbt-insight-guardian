@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import OnboardingQuestion from "./OnboardingQuestion";
@@ -86,83 +85,72 @@ const OnboardingExperience = () => {
   }
   
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <Card className="w-full max-w-3xl mx-auto rounded-xl shadow-lg">
-        <CardContent className="p-0">
-          <div className="p-6">
-            <OnboardingProgress 
-              currentStep={currentStep} 
-              totalSteps={totalSteps} 
-              progress={progress} 
+    <Card className="w-full rounded-xl shadow-lg">
+      <CardContent className="p-0">
+        <div className="p-6">
+          <OnboardingProgress 
+            currentStep={currentStep} 
+            totalSteps={totalSteps} 
+            progress={progress} 
+          />
+          
+          <div className="mt-6">
+            <OnboardingQuestion
+              question={currentQuestion}
+              currentAnswer={currentAnswer?.value}
+              onAnswer={(value) => setAnswer(currentQuestion.id, value)}
             />
-            
-            <div className="mt-6">
-              <OnboardingQuestion
-                question={currentQuestion}
-                currentAnswer={currentAnswer?.value}
-                onAnswer={(value) => setAnswer(currentQuestion.id, value)}
-              />
-            </div>
-            
-            <div className="flex justify-between mt-8">
-              <Button
-                variant="outline"
-                onClick={goToPreviousQuestion}
-                disabled={isFirstQuestion}
-                className="flex items-center gap-2"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </Button>
-              
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowReasoning(!showReasoning)}
-                  className="flex items-center gap-2"
-                >
-                  <Info className="h-4 w-4" />
-                  {showReasoning ? "Hide Insight" : "Show Insight"}
-                </Button>
-                
-                {currentQuestion.id === 'crisis_assessment' && (
-                  <Button asChild variant="destructive" className="flex items-center gap-2">
-                    <Link to="/emergency">
-                      <LifeBuoy className="h-4 w-4" />
-                      Emergency Help
-                    </Link>
-                  </Button>
-                )}
-                
-                {currentQuestion.id === 'crisis_support' && (
-                  <Button asChild variant="destructive" className="flex items-center gap-2">
-                    <Link to="/emergency">
-                      <ExternalLink className="h-4 w-4" />
-                      Connect Now
-                    </Link>
-                  </Button>
-                )}
-                
-                {currentQuestion.type !== 'singleChoice' && currentQuestion.id !== 'complete' && (
-                  <Button 
-                    onClick={goToNextQuestion} 
-                    disabled={!canContinue}
-                    className="flex items-center gap-2"
-                  >
-                    Continue
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
           </div>
           
-          {showReasoning && (
-            <OnboardingReasoning reasoning={getCurrentReasoning()} />
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          <div className="flex justify-between items-center mt-8">
+            <Button
+              variant="outline"
+              onClick={goToPreviousQuestion}
+              disabled={isFirstQuestion}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Back
+            </Button>
+            
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowReasoning(!showReasoning)}
+                className="flex items-center gap-2"
+              >
+                <Info className="h-4 w-4" />
+                {showReasoning ? "Hide Insight" : "Show Insight"}
+              </Button>
+              
+              {currentQuestion.id === 'crisis_assessment' && (
+                <Button asChild variant="destructive" className="flex items-center gap-2">
+                  <Link to="/emergency">
+                    <LifeBuoy className="h-4 w-4" />
+                    Emergency Help
+                  </Link>
+                </Button>
+              )}
+              
+              {currentQuestion.type !== 'singleChoice' && currentQuestion.id !== 'complete' && (
+                <Button 
+                  onClick={goToNextQuestion} 
+                  disabled={!canContinue}
+                  className="flex items-center gap-2"
+                >
+                  Continue
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {showReasoning && (
+          <OnboardingReasoning reasoning={getCurrentReasoning()} />
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
