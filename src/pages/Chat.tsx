@@ -1,8 +1,8 @@
-
 import { useState, useRef, useEffect } from "react";
 import MainLayout from "@/layouts/MainLayout";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea"; 
 import { 
   Mic, 
   MicOff, 
@@ -12,7 +12,8 @@ import {
   Brain,
   AlertCircle,
   Lightbulb,
-  CheckCircle
+  CheckCircle,
+  Send
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
@@ -93,6 +94,7 @@ const Chat = () => {
   const [isMemoryUpdated, setIsMemoryUpdated] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatInputRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
   const { therapyMode } = useAIMode();
   const navigate = useNavigate();
@@ -337,36 +339,57 @@ const Chat = () => {
       const entities = extractEntities(text);
       const liveThoughts: ThoughtProcess[] = [];
       
-      // Add observation based on the transcript so far
+      // More varied and contextual observations based on the transcript
       if (text.length > 10) {
+        const contextPatterns = [
+          `Live transcript analysis: User is discussing ${entities.people.length > 0 ? `person named ${entities.people[0]}` : 
+            entities.events.length > 0 ? `an ${entities.events[0]}` : 
+            entities.feelings.length > 0 ? `feelings of ${entities.feelings[0]}` : 
+            "a topic I'm analyzing"}`,
+          `I notice the user is expressing thoughts about ${entities.people.length > 0 ? `their relationship with ${entities.people[0]}` : 
+            entities.events.length > 0 ? `an upcoming ${entities.events[0]}` : 
+            entities.feelings.length > 0 ? `their emotional state of ${entities.feelings[0]}` : 
+            "their personal experiences"}`,
+          `The user's speech pattern indicates ${entities.feelings.length > 0 ? `${entities.feelings[0]} emotions` : 
+            entities.events.length > 0 ? `concern about a specific event` : 
+            "a neutral emotional state with potential underlying concerns"}`
+        ];
+        
         liveThoughts.push({
           id: Date.now().toString(),
           type: "observation",
-          content: `Live transcript analysis: User is discussing ${
-            entities.people.length > 0 ? `person named ${entities.people[0]}` : 
-            entities.events.length > 0 ? `an ${entities.events[0]}` : 
-            entities.feelings.length > 0 ? `feelings of ${entities.feelings[0]}` : 
-            "a topic I'm analyzing"
-          }`
+          content: contextPatterns[Math.floor(Math.random() * contextPatterns.length)]
         });
       }
       
-      // Add analysis if we detect important entities
+      // More varied analysis if we detect important entities
       if (entities.people.length > 0 && entities.events.length > 0) {
+        const interpersonalAnalysis = [
+          `User mentions ${entities.people[0]} in relation to ${entities.events[0]}${
+            entities.dates.length > 0 ? ` scheduled for ${entities.dates[0]}` : ""
+          }. This appears to be a significant upcoming event.`,
+          `The relationship between the user and ${entities.people[0]} seems to be affected by ${entities.events[0]}. This may be causing interpersonal tension.`,
+          `${entities.people[0]} plays a key role in the user's concerns about ${entities.events[0]}. This relationship dynamic warrants exploration.`
+        ];
+        
         liveThoughts.push({
           id: (Date.now() + 1).toString(),
           type: "analysis",
-          content: `User mentions ${entities.people[0]} in relation to ${entities.events[0]}${
-            entities.dates.length > 0 ? ` scheduled for ${entities.dates[0]}` : ""
-          }. This appears to be a significant upcoming event.`
+          content: interpersonalAnalysis[Math.floor(Math.random() * interpersonalAnalysis.length)]
         });
       } else if (entities.feelings.length > 0) {
+        const emotionalAnalysis = [
+          `User is expressing ${entities.feelings[0]} feelings${
+            entities.events.length > 0 ? ` about ${entities.events[0]}` : ""
+          }. This may indicate their current emotional state.`,
+          `The ${entities.feelings[0]} emotion appears to be a predominant theme, possibly linked to recent experiences or ongoing situations.`,
+          `I'm detecting emotional content related to ${entities.feelings[0]}, which suggests this is a meaningful emotional trigger for the user.`
+        ];
+        
         liveThoughts.push({
           id: (Date.now() + 1).toString(),
           type: "analysis",
-          content: `User is expressing ${entities.feelings[0]} feelings${
-            entities.events.length > 0 ? ` about ${entities.events[0]}` : ""
-          }. This may indicate their current emotional state.`
+          content: emotionalAnalysis[Math.floor(Math.random() * emotionalAnalysis.length)]
         });
       }
       
@@ -396,16 +419,25 @@ const Chat = () => {
   const determineCategory = (message: string): string => {
     const lowercaseMsg = message.toLowerCase();
     
-    if (lowercaseMsg.includes("anxious") || lowercaseMsg.includes("worry") || lowercaseMsg.includes("fear") || lowercaseMsg.includes("panic")) {
-      return "anxiety";
-    } else if (lowercaseMsg.includes("sad") || lowercaseMsg.includes("depress") || lowercaseMsg.includes("down") || lowercaseMsg.includes("hopeless")) {
-      return "depression";
-    } else if (lowercaseMsg.includes("stress") || lowercaseMsg.includes("overwhelm") || lowercaseMsg.includes("pressure")) {
-      return "stress";
-    } else if (lowercaseMsg.includes("relationship") || lowercaseMsg.includes("partner") || lowercaseMsg.includes("friend") || lowercaseMsg.includes("family")) {
-      return "relationships";
-    } else if (lowercaseMsg.includes("work") || lowercaseMsg.includes("job") || lowercaseMsg.includes("career") || lowercaseMsg.includes("boss")) {
-      return "work";
+    // More complex pattern matching for different emotional and situational categories
+    const patterns = {
+      anxiety: ["anxious", "worry", "fear", "panic", "nervous", "tense", "on edge", "apprehensive", "dread", "uneasy"],
+      depression: ["sad", "depress", "down", "hopeless", "empty", "worthless", "tired", "exhausted", "meaningless", "numb"],
+      stress: ["stress", "overwhelm", "pressure", "burden", "stretched thin", "burnout", "can't cope", "too much"],
+      relationships: ["relationship", "partner", "friend", "family", "colleague", "supervisor", "team", "connection", "bond", "trust"],
+      work: ["work", "job", "career", "boss", "coworker", "project", "deadline", "performance", "promotion", "workload"],
+      identity: ["who am i", "purpose", "meaning", "identity", "authentic", "real self", "true self", "values", "beliefs"],
+      health: ["health", "sick", "pain", "doctor", "diagnosis", "illness", "condition", "symptoms", "treatment"],
+      grief: ["loss", "grief", "died", "death", "missing", "gone", "mourning", "remember"]
+    };
+    
+    // Check each pattern category and find the best match
+    for (const [category, keywords] of Object.entries(patterns)) {
+      for (const keyword of keywords) {
+        if (lowercaseMsg.includes(keyword)) {
+          return category;
+        }
+      }
     }
     
     return "general";
@@ -415,62 +447,178 @@ const Chat = () => {
     const category = determineCategory(userMessage);
     const thoughts: ThoughtProcess[] = [];
     
+    // More contextual observations based on message content
+    const observationTemplates = {
+      anxiety: [
+        `User message mentions keywords related to anxiety. Tone suggests heightened worry and future-focused concerns.`,
+        `I detect anxiety-related language patterns. The user appears to be experiencing anticipatory worry about upcoming events.`,
+        `The message contains anxiety markers, including uncertainty about future outcomes and seeking reassurance.`
+      ],
+      depression: [
+        `User message suggests low mood indicators. Content shows negative self-perception and past-focused rumination.`,
+        `I notice depression-related language patterns with themes of hopelessness and diminished energy.`,
+        `The message contains depressive content focused on perceived inadequacy and pessimistic outlook.`
+      ],
+      stress: [
+        `User message indicates stress patterns. Content suggests perception of inadequate coping resources.`,
+        `I detect language consistent with feeling overwhelmed by external demands and internal pressure.`,
+        `The message contains stress markers related to time pressure and competing responsibilities.`
+      ],
+      relationships: [
+        `User message focuses on interpersonal dynamics. Content suggests attribution errors or communication patterns.`,
+        `I notice relationship-focused language that indicates boundary concerns or unmet expectations.`,
+        `The message contains relationship themes centered on trust issues and emotional safety concerns.`
+      ],
+      work: [
+        `User message references workplace challenges. Content suggests performance anxiety or imposter syndrome.`,
+        `I detect work-related concerns focusing on achievement pressure and professional identity.`,
+        `The message contains workplace themes related to balancing productivity and wellbeing.`
+      ],
+      identity: [
+        `User message explores existential themes. Content suggests identity exploration and meaning-making.`,
+        `I notice self-reflection patterns that indicate reassessment of core values and life direction.`,
+        `The message contains existential questions related to purpose and authentic expression.`
+      ],
+      health: [
+        `User message mentions health concerns. Content suggests health anxiety and bodily hypervigilance.`,
+        `I detect health-related worries that may be affecting overall quality of life and functioning.`,
+        `The message contains health themes centered on uncertainty about physical symptoms.`
+      ],
+      grief: [
+        `User message indicates grief responses. Content suggests processing of loss and adjustment challenges.`,
+        `I notice grief-related language patterns showing the emotional impact of significant loss.`,
+        `The message contains grief themes related to meaning-making after loss and maintaining connection.`
+      ],
+      general: [
+        `User message contains mixed themes that don't fit clearly into a specific pattern.`,
+        `I detect a combination of concerns that suggest complex interrelated issues.`,
+        `The message contains varied content that requires an integrative therapeutic approach.`
+      ]
+    };
+    
     thoughts.push({
       id: Date.now().toString(),
       type: "observation",
-      content: `User message mentions keywords related to ${category}. Tone suggests ${
-        category === "anxiety" ? "heightened worry" : 
-        category === "depression" ? "low mood" :
-        category === "stress" ? "feeling overwhelmed" :
-        category === "relationships" ? "attribution errors or communication patterns" :
-        category === "work" ? "performance anxiety or imposter syndrome" : "unclear thought patterns"
-      }.`
+      content: observationTemplates[category as keyof typeof observationTemplates][
+        Math.floor(Math.random() * observationTemplates[category as keyof typeof observationTemplates].length)
+      ]
     });
+    
+    // More varied and contextualized analysis
+    const analysisTemplates = {
+      anxiety: [
+        `Based on CBT frameworks, this appears to be a potential case of catastrophic thinking and future-focused worry.`,
+        `The cognitive patterns suggest anxiety maintenance through avoidance behaviors and safety-seeking.`,
+        `Using ACT principles, I notice experiential avoidance of uncertainty and cognitive fusion with threat narratives.`
+      ],
+      depression: [
+        `From a cognitive perspective, there are patterns of negative self-schemas and selective attention to failure.`,
+        `The narrative suggests ruminative thought patterns that maintain low mood through analytical self-focus.`,
+        `Using behavioral activation concepts, I notice potential withdrawal from reward-generating activities.`
+      ],
+      stress: [
+        `Through a stress management lens, I see indications of perceived demand exceeding perceived resources.`,
+        `The language suggests allostatic load may be building through chronic activation of stress response systems.`,
+        `Using mindfulness concepts, I notice potential difficulty detaching from work concerns during rest periods.`
+      ],
+      relationships: [
+        `From an attachment theory perspective, I notice patterns that suggest activation of core relational schemas.`,
+        `The interpersonal dynamics described may relate to unexamined expectations and communication patterns.`,
+        `Using systemic concepts, I see reciprocal interaction patterns that may be maintaining relational distress.`
+      ],
+      work: [
+        `Through an occupational health lens, I notice potential work-life boundary concerns and role strain.`,
+        `The professional challenges described may connect to core beliefs about performance and self-worth.`,
+        `Using career development concepts, I see tensions between current role demands and longer-term aspirations.`
+      ],
+      general: [
+        `Drawing on integrated approaches, this appears to involve interconnected cognitive, emotional and behavioral patterns.`,
+        `The presentation suggests multilevel concerns that would benefit from both symptom management and deeper exploration.`,
+        `Using transdiagnostic principles, I notice emotional regulation challenges across different life domains.`
+      ]
+    };
     
     thoughts.push({
       id: (Date.now() + 1).toString(),
       type: "analysis",
-      content: `Based on CBT frameworks, this appears to be a potential case of ${
-        category === "anxiety" ? "catastrophic thinking and future-focused worry" : 
-        category === "depression" ? "negative self-perception and past-focused rumination" :
-        category === "stress" ? "perception of inadequate coping resources" :
-        category === "relationships" ? "attribution errors or communication patterns" :
-        category === "work" ? "performance anxiety or imposter syndrome" : "unclear thought patterns"
-      }. Checking for cognitive distortions...`
+      content: analysisTemplates[category as keyof typeof analysisTemplates] ? 
+        analysisTemplates[category as keyof typeof analysisTemplates][
+          Math.floor(Math.random() * analysisTemplates[category as keyof typeof analysisTemplates].length)
+        ] : 
+        analysisTemplates.general[Math.floor(Math.random() * analysisTemplates.general.length)]
     });
     
     // Process entities and add relevant thoughts
     const entities = extractEntities(userMessage);
     
     if (entities.people.length > 0) {
+      const peopleAnalysis = [
+        `User mentioned person: ${entities.people.join(", ")}. This person appears to be significant in the current context.`,
+        `The reference to ${entities.people.join(", ")} suggests an important relationship dynamic worth exploring further.`,
+        `${entities.people.join(", ")} seems to play a meaningful role in the user's current situation or emotional state.`
+      ];
+      
       thoughts.push({
         id: (Date.now() + 2).toString(),
         type: "analysis",
-        content: `User mentioned person: ${entities.people.join(", ")}. This person appears to be significant in the current context.`
+        content: peopleAnalysis[Math.floor(Math.random() * peopleAnalysis.length)]
       });
     }
     
     if (entities.dates.length > 0 && entities.events.length > 0) {
+      const timeBasedAnalysis = [
+        `User mentioned event: ${entities.events[0]} on ${entities.dates[0]}. This is likely causing time-based pressure.`,
+        `The upcoming ${entities.events[0]} on ${entities.dates[0]} appears to be a significant temporal anchor in their concerns.`,
+        `The reference to ${entities.events[0]} happening on ${entities.dates[0]} suggests anticipatory processing of this event.`
+      ];
+      
       thoughts.push({
         id: (Date.now() + 3).toString(),
         type: "analysis",
-        content: `User mentioned event: ${entities.events[0]} on ${entities.dates[0]}. This is likely causing time-based pressure.`
+        content: timeBasedAnalysis[Math.floor(Math.random() * timeBasedAnalysis.length)]
       });
     }
 
     // Add to permanent memory if this is a significant insight
     updateMemoryWithEntities(userMessage);
     
+    // More contextual and mode-specific approach conclusions
+    const conclusionTemplates = {
+      ai: [
+        `This conversation will be approached with balanced AI techniques combining CBT and mindfulness.`,
+        `I'll use an integrative AI approach drawing on evidence-based techniques tailored to the user's needs.`,
+        `My response strategy will utilize AI-optimized therapeutic techniques with personalized pacing.`
+      ],
+      clinical: [
+        `This conversation will be approached with evidence-based clinical frameworks and structured therapeutic techniques.`,
+        `I'll employ a clinical approach using research-supported interventions appropriate for these presenting concerns.`,
+        `My response strategy will follow clinical best practices while maintaining appropriate therapeutic boundaries.`
+      ],
+      corporate: [
+        `This conversation will be approached with workplace-focused strategies and professional development perspective.`,
+        `I'll utilize workplace wellness frameworks that balance performance optimization with wellbeing priorities.`,
+        `My response strategy will address both professional effectiveness and personal sustainability.`
+      ],
+      relaxation: [
+        `This conversation will be approached with relaxation techniques and stress management focus.`,
+        `I'll emphasize physiological regulation strategies and attentional training techniques.`,
+        `My response strategy will prioritize immediate relief while building longer-term resilience resources.`
+      ],
+      standard: [
+        `This conversation will be approached with standard therapeutic conversation techniques.`,
+        `I'll use a balanced approach combining supportive listening with gentle exploration.`,
+        `My response strategy will focus on creating a space for reflection while offering practical tools.`
+      ]
+    };
+    
     thoughts.push({
       id: (Date.now() + 4).toString(),
       type: "conclusion",
-      content: `This conversation will be approached with ${
-        therapyMode === 'ai' ? 'balanced AI techniques combining CBT and mindfulness' :
-        therapyMode === 'clinical' ? 'evidence-based clinical frameworks and structured therapeutic techniques' :
-        therapyMode === 'corporate' ? 'workplace-focused strategies and professional development perspective' :
-        therapyMode === 'relaxation' ? 'relaxation techniques and stress management focus' :
-        'standard therapeutic conversation techniques'
-      }.`
+      content: conclusionTemplates[therapyMode as keyof typeof conclusionTemplates] ? 
+        conclusionTemplates[therapyMode as keyof typeof conclusionTemplates][
+          Math.floor(Math.random() * conclusionTemplates[therapyMode as keyof typeof conclusionTemplates].length)
+        ] : 
+        conclusionTemplates.standard[Math.floor(Math.random() * conclusionTemplates.standard.length)]
     });
     
     return thoughts;
@@ -584,34 +732,169 @@ const Chat = () => {
           item.content.toLowerCase().includes("presentation")
         );
         
-        // Customize response based on detected entities and memory
+        // Large dataset of varied responses based on context and therapy mode
+        const responseTemplates = {
+          sarah_stress: [
+            `I understand Sarah at work has been causing you stress. ${assignmentMemory ? 
+              "And this is connected to your upcoming presentation, correct? How much of the presentation have you completed so far?" : 
+              "Can you tell me more about how Sarah's behavior is affecting your work environment?"}`,
+            `It sounds like your interactions with Sarah are creating workplace tension. ${assignmentMemory ? 
+              "This seems particularly challenging with your presentation approaching. What aspects of the presentation feel most affected by this situation?" : 
+              "What specific interactions with Sarah have been most difficult for you to navigate?"}`,
+            `Sarah's impact on your work experience appears significant. ${assignmentMemory ? 
+              "With your presentation deadline approaching, how are you balancing these interpersonal challenges with your preparation?" : 
+              "How has this situation evolved over time? Have there been any patterns in your interactions?"}`
+          ],
+          assignment_presentation: [
+            `Regarding your upcoming assignment due on Monday, how much progress have you made? What specific aspects are feeling most challenging right now?`,
+            `With the presentation deadline approaching, which parts of the preparation are consuming most of your mental energy? What would help you feel more prepared?`,
+            `I'd like to understand more about this assignment that's due soon. What are your expectations for yourself regarding this presentation, and how does that compare with what's actually required?`
+          ],
+          clinical_approach: {
+            anxiety: [
+              `From a clinical perspective, anxiety concerns often benefit from structured approaches. ${
+                relevantMemory.length > 0 ? `I notice you've mentioned ${relevantMemory[0].content.split(":")[1]} before. How is that situation evolving?` : 
+                "Can you tell me more about when these worries first began and how they've evolved over time?"
+              }`,
+              `When looking at anxiety through a clinical lens, it's helpful to identify specific triggers and thought patterns. ${
+                relevantMemory.length > 0 ? `You've previously mentioned ${relevantMemory[0].content.split(":")[1]}. Has this continued to be a source of concern?` : 
+                "Can you describe a recent situation where you felt this anxiety most intensely?"
+              }`,
+              `In clinical treatment for anxiety, we often examine both physiological and cognitive components. ${
+                relevantMemory.length > 0 ? `Given your previous mention of ${relevantMemory[0].content.split(":")[1]}, how have you been managing the physical sensations of anxiety?` : 
+                "What physical sensations do you notice when these worries are strongest?"
+              }`
+            ],
+            depression: [
+              `From a clinical perspective, mood concerns often have both cognitive and behavioral components. ${
+                relevantMemory.length > 0 ? `I recall you mentioned ${relevantMemory[0].content.split(":")[1]}. How has that been affecting your daily functioning?` : 
+                "Can you tell me about your energy levels and any changes in activities you've enjoyed in the past?"
+              }`,
+              `When approaching depression clinically, we look at patterns over time. ${
+                relevantMemory.length > 0 ? `You previously shared about ${relevantMemory[0].content.split(":")[1]}. Has there been any shift in how you've been feeling since then?` : 
+                "Have you noticed any patterns to when these feelings are stronger or somewhat lighter?"
+              }`,
+              `Clinical approaches to low mood often involve examining both thoughts and behaviors. ${
+                relevantMemory.length > 0 ? `Considering your earlier mention of ${relevantMemory[0].content.split(":")[1]}, what thoughts tend to come up most frequently?` : 
+                "What thoughts tend to accompany these feelings of sadness or emptiness?"
+              }`
+            ],
+            general: [
+              `From a clinical perspective, ${category} concerns often benefit from structured approaches. ${
+                relevantMemory.length > 0 ? `I notice you've mentioned ${relevantMemory[0].content.split(":")[1]} before. How is that situation evolving?` : 
+                "Can you tell me more about when these feelings first began and how they've evolved over time?"
+              }`,
+              `When looking at this through a clinical lens, it's helpful to identify specific patterns and triggers. ${
+                relevantMemory.length > 0 ? `You've previously mentioned ${relevantMemory[0].content.split(":")[1]}. How has this been affecting you recently?` : 
+                "Can you describe a recent situation where you felt this most intensely?"
+              }`,
+              `In clinical treatment for ${category}-related concerns, we often examine both emotional and cognitive components. ${
+                relevantMemory.length > 0 ? `Given your previous mention of ${relevantMemory[0].content.split(":")[1]}, how have you been managing these experiences?` : 
+                "What thoughts tend to accompany these feelings?"
+              }`
+            ]
+          },
+          corporate_approach: {
+            work: [
+              `In workplace contexts, work stress can impact professional performance. ${
+                relevantMemory.length > 0 ? `I recall you mentioned ${relevantMemory[0].content.split(":")[1]}. How is that affecting your work environment now?` : 
+                "Let's explore some strategies that might help you maintain balance while achieving your career goals."
+              }`,
+              `From a professional development perspective, these workplace challenges present both obstacles and opportunities. ${
+                relevantMemory.length > 0 ? `Based on what you shared about ${relevantMemory[0].content.split(":")[1]}, what would a better workplace dynamic look like for you?` : 
+                "What aspects of your professional identity feel most affected by the current situation?"
+              }`,
+              `When considering workplace wellness, it's important to address both immediate stressors and longer-term career alignment. ${
+                relevantMemory.length > 0 ? `You mentioned ${relevantMemory[0].content.split(":")[1]} previously. Have there been any developments in that situation?` : 
+                "How would you describe the gap between your current work experience and your ideal professional environment?"
+              }`
+            ],
+            general: [
+              `In workplace contexts, ${category} can impact professional performance. ${
+                relevantMemory.length > 0 ? `I recall you mentioned ${relevantMemory[0].content.split(":")[1]}. How is that affecting your work environment now?` : 
+                "Let's explore some strategies that might help you maintain balance while achieving your career goals."
+              }`,
+              `From a professional development perspective, this situation presents both challenges and opportunities. ${
+                relevantMemory.length > 0 ? `Based on what you shared about ${relevantMemory[0].content.split(":")[1]}, how is this affecting your workplace functioning?` : 
+                "How would you like to approach this situation differently from a professional standpoint?"
+              }`,
+              `When considering workplace wellness, it's important to address both immediate concerns and longer-term professional goals. ${
+                relevantMemory.length > 0 ? `You mentioned ${relevantMemory[0].content.split(":")[1]} previously. How does this relate to your career aspirations?` : 
+                "What workplace resources or approaches might help you navigate this situation more effectively?"
+              }`
+            ]
+          },
+          relaxation_approach: {
+            stress: [
+              `Let's focus on easing your stress with some relaxation techniques. ${
+                relevantMemory.length > 0 ? `I remember you mentioned ${relevantMemory[0].content.split(":")[1]}. How are you feeling about that now?` : 
+                "First, could we try a brief breathing exercise to center ourselves before exploring this further?"
+              }`,
+              `For stress reduction, creating moments of physiological calm can help shift your nervous system state. ${
+                relevantMemory.length > 0 ? `Considering what you shared about ${relevantMemory[0].content.split(":")[1]}, where in your body do you feel this stress most intensely?` : 
+                "Would you be open to trying a quick grounding exercise to help regulate your nervous system?"
+              }`,
+              `Stress management often begins with creating small pauses throughout your day. ${
+                relevantMemory.length > 0 ? `Given your mention of ${relevantMemory[0].content.split(":")[1]}, what brief relaxation practices might fit into your schedule?` : 
+                "Let's start with a simple relaxation technique - can you take three slow, deep breaths right now?"
+              }`
+            ],
+            general: [
+              `Let's focus on easing your ${category} with some relaxation techniques. ${
+                relevantMemory.length > 0 ? `I remember you mentioned ${relevantMemory[0].content.split(":")[1]}. How are you feeling about that now?` : 
+                "First, could we try a brief calming exercise to center ourselves before exploring this further?"
+              }`,
+              `For managing these feelings, creating moments of physiological calm can be helpful. ${
+                relevantMemory.length > 0 ? `Considering what you shared about ${relevantMemory[0].content.split(":")[1]}, when do you notice these feelings intensifying?` : 
+                "Would you be open to trying a quick grounding practice that might offer some immediate relief?"
+              }`,
+              `Addressing ${category} often begins with small self-regulation practices throughout your day. ${
+                relevantMemory.length > 0 ? `Given your mention of ${relevantMemory[0].content.split(":")[1]}, what calming activities have helped you in the past?` : 
+                "What simple relaxation practices have you found helpful in similar situations?"
+              }`
+            ]
+          },
+          standard_approach: {
+            general: [
+              `I notice you mentioned something related to ${category}. ${
+                relevantMemory.length > 0 ? `Based on our previous conversations about ${relevantMemory[0].content.split(":")[1]}, how are you coping with this situation now?` : 
+                "How long have you been experiencing these feelings, and what tends to trigger them?"
+              }`,
+              `It sounds like you're dealing with some ${category}-related concerns. ${
+                relevantMemory.length > 0 ? `We've talked before about ${relevantMemory[0].content.split(":")[1]}. Has your perspective on that changed recently?` : 
+                "Could you tell me more about how these experiences are affecting your daily life?"
+              }`,
+              `I'm hearing themes related to ${category} in what you're sharing. ${
+                relevantMemory.length > 0 ? `Given what you've shared previously about ${relevantMemory[0].content.split(":")[1]}, how does this current situation compare?` : 
+                "What aspects of this situation feel most important for us to focus on right now?"
+              }`
+            ]
+          }
+        };
+        
+        // Customize response based on detected entities, memory, and therapy mode
         if (messageContent.toLowerCase().includes("sarah") && messageContent.toLowerCase().includes("stress")) {
-          aiResponse = `I understand Sarah at work has been causing you stress. ${assignmentMemory ? 
-            "And this is connected to your upcoming presentation, correct? How much of the presentation have you completed so far?" : 
-            "Can you tell me more about how Sarah's behavior is affecting your work?"}`;
+          const sarahResponses = responseTemplates.sarah_stress;
+          aiResponse = sarahResponses[Math.floor(Math.random() * sarahResponses.length)];
         } else if (messageContent.toLowerCase().includes("presentation") || messageContent.toLowerCase().includes("assignment")) {
-          aiResponse = `Regarding your upcoming assignment due on Monday, how much progress have you made? What specific aspects are feeling most challenging right now?`;
+          const presentationResponses = responseTemplates.assignment_presentation;
+          aiResponse = presentationResponses[Math.floor(Math.random() * presentationResponses.length)];
         } else if (therapyMode === 'clinical') {
-          aiResponse = `From a clinical perspective, ${category} concerns often benefit from structured approaches. ${
-            relevantMemory.length > 0 ? `I notice you've mentioned ${relevantMemory[0].content.split(":")[1]} before. How is that situation evolving?` : 
-            "Can you tell me more about when these feelings first began and how they've evolved over time?"
-          }`;
+          const clinicalResponses = responseTemplates.clinical_approach[category as keyof typeof responseTemplates.clinical_approach] || 
+                                   responseTemplates.clinical_approach.general;
+          aiResponse = clinicalResponses[Math.floor(Math.random() * clinicalResponses.length)];
         } else if (therapyMode === 'corporate') {
-          aiResponse = `In workplace contexts, ${category} can impact professional performance. ${
-            relevantMemory.length > 0 ? `I recall you mentioned ${relevantMemory[0].content.split(":")[1]}. How is that affecting your work environment now?` : 
-            "Let's explore some strategies that might help you maintain balance while achieving your career goals."
-          }`;
+          const corporateResponses = responseTemplates.corporate_approach[category as keyof typeof responseTemplates.corporate_approach] || 
+                                   responseTemplates.corporate_approach.general;
+          aiResponse = corporateResponses[Math.floor(Math.random() * corporateResponses.length)];
         } else if (therapyMode === 'relaxation') {
-          aiResponse = `Let's focus on easing your ${category} with some relaxation techniques. ${
-            relevantMemory.length > 0 ? `I remember you mentioned ${relevantMemory[0].content.split(":")[1]}. How are you feeling about that now?` : 
-            "First, could we try a brief breathing exercise to center ourselves before exploring this further?"
-          }`;
+          const relaxationResponses = responseTemplates.relaxation_approach[category as keyof typeof responseTemplates.relaxation_approach] || 
+                                     responseTemplates.relaxation_approach.general;
+          aiResponse = relaxationResponses[Math.floor(Math.random() * relaxationResponses.length)];
         } else {
           // Standard/AI mode
-          aiResponse = `I notice you mentioned something related to ${category}. ${
-            relevantMemory.length > 0 ? `Based on our previous conversations about ${relevantMemory[0].content.split(":")[1]}, how are you coping with this situation now?` : 
-            "How long have you been experiencing these feelings, and what tends to trigger them?"
-          }`;
+          const standardResponses = responseTemplates.standard_approach.general;
+          aiResponse = standardResponses[Math.floor(Math.random() * standardResponses.length)];
         }
         
         const aiMessage: Message = {
@@ -772,6 +1055,21 @@ const Chat = () => {
   const toggleThoughtProcess = () => {
     setShowThoughtProcess(prev => !prev);
   };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Submit on Enter (without shift for newline)
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+  
+  // Focus chat input when in text mode
+  useEffect(() => {
+    if (chatMode === 'text' && chatInputRef.current) {
+      chatInputRef.current.focus();
+    }
+  }, [chatMode]);
 
   return (
     <MainLayout>
@@ -976,6 +1274,29 @@ const Chat = () => {
               </div>
             </ScrollArea>
             
+            {/* Chat input box */}
+            <div className="p-4 border-t">
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="Type your message here..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  ref={chatInputRef}
+                  className="min-h-[50px] resize-none"
+                  rows={2}
+                />
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={isSending || !newMessage.trim()}
+                  className="self-end"
+                  size="icon"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
             {showThoughtProcess && thoughtProcessSteps.length > 0 && (
               <div className="border-t p-2">
                 <ScrollArea className="h-28">
@@ -1045,6 +1366,28 @@ const Chat = () => {
               >
                 <Brain className="h-6 w-6" />
               </Button>
+            </div>
+            
+            {/* Text input in voice mode */}
+            <div className="w-full max-w-md mt-6">
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="Type a message instead..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="min-h-[50px] resize-none"
+                  rows={1}
+                />
+                <Button 
+                  onClick={handleSendMessage} 
+                  disabled={isSending || (!newMessage.trim() && !transcript.trim())}
+                  className="self-end"
+                  size="icon"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
             
             {/* Live transcript */}

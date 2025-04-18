@@ -37,7 +37,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
       <Sidebar isOpen={sidebarOpen} toggleSidebar={toggleSidebar} />
       <div className={`flex-1 flex flex-col transition-all duration-300 ${sidebarOpen && !isMobile ? 'ml-64' : 'ml-0'} h-screen overflow-auto`}>
         <NavBar toggleSidebar={toggleSidebar} />
-        <main className="p-4 md:p-6 flex-1 overflow-auto w-full max-w-5xl mx-auto">
+        <main className="p-4 md:p-6 flex-1 overflow-auto w-full mx-auto">
           {children}
         </main>
       </div>
